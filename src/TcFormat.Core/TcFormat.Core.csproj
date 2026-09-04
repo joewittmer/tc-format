@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="editorconfig" Version="0.18.0" />
+  </ItemGroup>
+</Project>

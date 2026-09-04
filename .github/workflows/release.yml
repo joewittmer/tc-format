@@ -1,0 +1,163 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - v*
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version without a leading v
+        required: true
+        default: 1.0.0.0
+
+permissions:
+  contents: write
+
+jobs:
+  build-package-and-release:
+    runs-on: windows-2025
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+              $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          }
+          else {
+              $version = '${{ inputs.version }}'
+          }
+          if ($version -notmatch '^\d+\.\d+\.\d+(?:\.\d+)?(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$') {
+              throw "Invalid release version: $version"
+          }
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Restore
+        run: dotnet restore tc_format.slnx
+
+      - name: Verify formatting
+        run: dotnet format tc_format.slnx --verify-no-changes --no-restore
+
+      - name: Build and test
+        run: |
+          dotnet build tc_format.slnx --configuration Release --no-restore
+          dotnet test tc_format.slnx --configuration Release --no-build
+
+      - name: Publish self-contained executable
+        shell: pwsh
+        run: |
+          dotnet publish src\TcFormat.Cli\TcFormat.Cli.csproj `
+              --configuration Release `
+              --runtime win-x64 `
+              --self-contained `
+              --no-restore `
+              -p:Version=${{ steps.version.outputs.value }} `
+              --output artifacts\publish\win-x64
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          .\installer\build.ps1 `
+              -Version '${{ steps.version.outputs.value }}' `
+              -PublishDirectory artifacts\publish\win-x64 `
+              -OutputDirectory artifacts\release
+
+      - name: Build portable archive
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.value }}'
+          $portableDirectory = "artifacts\portable\tc_format-$version-win-x64"
+          New-Item -ItemType Directory -Force "$portableDirectory\examples" | Out-Null
+          Copy-Item artifacts\publish\win-x64\tc_format.exe $portableDirectory
+          Copy-Item LICENSE $portableDirectory
+          Copy-Item README.md $portableDirectory
+          Copy-Item THIRD-PARTY-NOTICES.md $portableDirectory
+          Copy-Item examples\.editorconfig "$portableDirectory\examples"
+          Compress-Archive `
+              -Path "$portableDirectory\*" `
+              -DestinationPath "artifacts\release\tc_format-$version-win-x64.zip"
+
+      - name: Verify installer and PATH registration
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.value }}'
+          $installDirectory = Join-Path $env:RUNNER_TEMP 'tc-format-install-test'
+          $installer = Get-Item "artifacts\release\tc_format-$version-win-x64-setup.exe"
+          $arguments = @(
+              '/VERYSILENT',
+              '/SUPPRESSMSGBOXES',
+              '/NORESTART',
+              '/TYPE=compact',
+              "/DIR=$installDirectory"
+          )
+          $process = Start-Process $installer.FullName -ArgumentList $arguments -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+              throw "Installer exited with code $($process.ExitCode)."
+          }
+
+          $systemPath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+          $pathEntries = $systemPath -split ';' | ForEach-Object { $_.Trim().TrimEnd('\') }
+          if ($pathEntries -notcontains $installDirectory.TrimEnd('\')) {
+              throw 'The installer did not add its installation directory to the system PATH.'
+          }
+
+          $env:Path = "$installDirectory;$env:Path"
+          tc_format --version
+
+          $uninstaller = Join-Path $installDirectory 'unins000.exe'
+          $process = Start-Process $uninstaller -ArgumentList @(
+              '/VERYSILENT',
+              '/SUPPRESSMSGBOXES',
+              '/NORESTART'
+          ) -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+              throw "Uninstaller exited with code $($process.ExitCode)."
+          }
+
+          $systemPath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+          $pathEntries = $systemPath -split ';' | ForEach-Object { $_.Trim().TrimEnd('\') }
+          if ($pathEntries -contains $installDirectory.TrimEnd('\')) {
+              throw 'The uninstaller did not remove its installation directory from the system PATH.'
+          }
+
+      - name: Write checksums
+        shell: pwsh
+        run: |
+          Get-ChildItem artifacts\release\tc_format-* |
+              Sort-Object Name |
+              ForEach-Object {
+                  $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+                  "$hash  $($_.Name)"
+              } |
+              Set-Content artifacts\release\SHA256SUMS.txt
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tc_format-${{ steps.version.outputs.value }}-win-x64
+          path: artifacts/release/*
+          if-no-files-found: error
+
+      - name: Publish GitHub release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $version = '${{ steps.version.outputs.value }}'
+          $releaseFiles = Get-ChildItem artifacts\release | ForEach-Object { $_.FullName }
+          gh release create $tag @releaseFiles `
+              --verify-tag `
+              --generate-notes `
+              --title "tc_format $version"

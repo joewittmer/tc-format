@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable">
+  <Extern href="stdidcmd.h" />
+  <Extern href="vsshlids.h" />
+
+  <Commands package="guidTcFormatPackage">
+    <Groups>
+      <Group guid="guidTcFormatCommandSet" id="TcFormatToolsGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+      </Group>
+      <Group guid="guidTcFormatCommandSet" id="TcFormatEditorContextGroup" priority="0x0600">
+      </Group>
+      <Group guid="guidTcFormatCommandSet" id="TcFormatItemContextGroup" priority="0x0600">
+      </Group>
+      <Group guid="guidTcFormatCommandSet" id="TcFormatFolderContextGroup" priority="0x0600">
+      </Group>
+      <Group guid="guidTcFormatCommandSet" id="TcFormatProjectContextGroup" priority="0x0600">
+      </Group>
+    </Groups>
+
+    <Buttons>
+      <Button guid="guidTcFormatCommandSet" id="FormatActiveDocumentCommand" priority="0x0100" type="Button">
+        <Parent guid="guidTcFormatCommandSet" id="TcFormatToolsGroup" />
+        <Strings>
+          <ButtonText>Format Active TwinCAT Structured Text</ButtonText>
+          <CommandName>tc_format.FormatActiveDocument</CommandName>
+        </Strings>
+      </Button>
+      <Button guid="guidTcFormatCommandSet" id="FormatShortcutCtrlRThenCtrlFCommand" priority="0x0110" type="Button">
+        <Parent guid="guidTcFormatCommandSet" id="TcFormatToolsGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Format Active TwinCAT Structured Text (Ctrl+R, Ctrl+F)</ButtonText>
+          <CommandName>tc_format.FormatShortcutCtrlRThenCtrlF</CommandName>
+        </Strings>
+      </Button>
+      <Button guid="guidTcFormatCommandSet" id="FormatShortcutCtrl1Command" priority="0x0111" type="Button">
+        <Parent guid="guidTcFormatCommandSet" id="TcFormatToolsGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Format Active TwinCAT Structured Text (Ctrl+1)</ButtonText>
+          <CommandName>tc_format.FormatShortcutCtrl1</CommandName>
+        </Strings>
+      </Button>
+      <Button guid="guidTcFormatCommandSet" id="FormatShortcutCtrl2Command" priority="0x0112" type="Button">
+        <Parent guid="guidTcFormatCommandSet" id="TcFormatToolsGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Format Active TwinCAT Structured Text (Ctrl+2)</ButtonText>
+          <CommandName>tc_format.FormatShortcutCtrl2</CommandName>
+        </Strings>
+      </Button>
+      <Button guid="guidTcFormatCommandSet" id="FormatShortcutCtrl3Command" priority="0x0113" type="Button">
+        <Parent guid="guidTcFormatCommandSet" id="TcFormatToolsGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Format Active TwinCAT Structured Text (Ctrl+3)</ButtonText>
+          <CommandName>tc_format.FormatShortcutCtrl3</CommandName>
+        </Strings>
+      </Button>
+      <Button guid="guidTcFormatCommandSet" id="FormatShortcutCtrl4Command" priority="0x0114" type="Button">
+        <Parent guid="guidTcFormatCommandSet" id="TcFormatToolsGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Format Active TwinCAT Structured Text (Ctrl+4)</ButtonText>
+          <CommandName>tc_format.FormatShortcutCtrl4</CommandName>
+        </Strings>
+      </Button>
+      <Button guid="guidTcFormatCommandSet" id="FormatShortcutCtrl5Command" priority="0x0115" type="Button">
+        <Parent guid="guidTcFormatCommandSet" id="TcFormatToolsGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Format Active TwinCAT Structured Text (Ctrl+5)</ButtonText>
+          <CommandName>tc_format.FormatShortcutCtrl5</CommandName>
+        </Strings>
+      </Button>
+      <Button guid="guidTcFormatCommandSet" id="FormatShortcutCtrl6Command" priority="0x0116" type="Button">
+        <Parent guid="guidTcFormatCommandSet" id="TcFormatToolsGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Format Active TwinCAT Structured Text (Ctrl+6)</ButtonText>
+          <CommandName>tc_format.FormatShortcutCtrl6</CommandName>
+        </Strings>
+      </Button>
+      <Button guid="guidTcFormatCommandSet" id="FormatShortcutCtrl7Command" priority="0x0117" type="Button">
+        <Parent guid="guidTcFormatCommandSet" id="TcFormatToolsGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Format Active TwinCAT Structured Text (Ctrl+7)</ButtonText>
+          <CommandName>tc_format.FormatShortcutCtrl7</CommandName>
+        </Strings>
+      </Button>
+      <Button guid="guidTcFormatCommandSet" id="FormatShortcutCtrl8Command" priority="0x0118" type="Button">
+        <Parent guid="guidTcFormatCommandSet" id="TcFormatToolsGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Format Active TwinCAT Structured Text (Ctrl+8)</ButtonText>
+          <CommandName>tc_format.FormatShortcutCtrl8</CommandName>
+        </Strings>
+      </Button>
+      <Button guid="guidTcFormatCommandSet" id="FormatShortcutCtrl9Command" priority="0x0119" type="Button">
+        <Parent guid="guidTcFormatCommandSet" id="TcFormatToolsGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>Format Active TwinCAT Structured Text (Ctrl+9)</ButtonText>
+          <CommandName>tc_format.FormatShortcutCtrl9</CommandName>
+        </Strings>
+      </Button>
+      <Button guid="guidTcFormatCommandSet" id="FormatSolutionSelectionCommand" priority="0x0100" type="Button">
+        <Parent guid="guidTcFormatCommandSet" id="TcFormatItemContextGroup" />
+        <Strings>
+          <ButtonText>Format Structured Text</ButtonText>
+          <CommandName>tc_format.FormatSolutionSelection</CommandName>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+
+  <CommandPlacements>
+    <CommandPlacement guid="guidTcFormatCommandSet" id="TcFormatEditorContextGroup" priority="0x0600">
+      <Parent guid="guidTwinCatPlcCommandSet" id="TwinCatPlcCodeEditorContextMenu" />
+    </CommandPlacement>
+    <CommandPlacement guid="guidTcFormatCommandSet" id="TcFormatItemContextGroup" priority="0x0600">
+      <Parent guid="guidTwinCatPlcCommandSet" id="TwinCatPlcFileContextMenu" />
+    </CommandPlacement>
+    <CommandPlacement guid="guidTcFormatCommandSet" id="TcFormatFolderContextGroup" priority="0x0600">
+      <Parent guid="guidTwinCatPlcCommandSet" id="TwinCatPlcFolderContextMenu" />
+    </CommandPlacement>
+    <CommandPlacement guid="guidTcFormatCommandSet" id="TcFormatProjectContextGroup" priority="0x0600">
+      <Parent guid="guidTwinCatPlcCommandSet" id="TwinCatPlcProjectContextMenu" />
+    </CommandPlacement>
+    <CommandPlacement guid="guidTcFormatCommandSet" id="FormatActiveDocumentCommand" priority="0x0100">
+      <Parent guid="guidTcFormatCommandSet" id="TcFormatEditorContextGroup" />
+    </CommandPlacement>
+    <CommandPlacement guid="guidTcFormatCommandSet" id="FormatSolutionSelectionCommand" priority="0x0100">
+      <Parent guid="guidTcFormatCommandSet" id="TcFormatFolderContextGroup" />
+    </CommandPlacement>
+    <CommandPlacement guid="guidTcFormatCommandSet" id="FormatSolutionSelectionCommand" priority="0x0100">
+      <Parent guid="guidTcFormatCommandSet" id="TcFormatProjectContextGroup" />
+    </CommandPlacement>
+  </CommandPlacements>
+
+  <KeyBindings>
+    <KeyBinding guid="guidTcFormatCommandSet"
+                id="FormatShortcutCtrlRThenCtrlFCommand"
+                editor="guidVSStd97"
+                key1="R"
+                mod1="CONTROL"
+                key2="F"
+                mod2="CONTROL" />
+    <KeyBinding guid="guidTcFormatCommandSet" id="FormatShortcutCtrl1Command"
+                editor="guidVSStd97" key1="1" mod1="CONTROL" />
+    <KeyBinding guid="guidTcFormatCommandSet" id="FormatShortcutCtrl2Command"
+                editor="guidVSStd97" key1="2" mod1="CONTROL" />
+    <KeyBinding guid="guidTcFormatCommandSet" id="FormatShortcutCtrl3Command"
+                editor="guidVSStd97" key1="3" mod1="CONTROL" />
+    <KeyBinding guid="guidTcFormatCommandSet" id="FormatShortcutCtrl4Command"
+                editor="guidVSStd97" key1="4" mod1="CONTROL" />
+    <KeyBinding guid="guidTcFormatCommandSet" id="FormatShortcutCtrl5Command"
+                editor="guidVSStd97" key1="5" mod1="CONTROL" />
+    <KeyBinding guid="guidTcFormatCommandSet" id="FormatShortcutCtrl6Command"
+                editor="guidVSStd97" key1="6" mod1="CONTROL" />
+    <KeyBinding guid="guidTcFormatCommandSet" id="FormatShortcutCtrl7Command"
+                editor="guidVSStd97" key1="7" mod1="CONTROL" />
+    <KeyBinding guid="guidTcFormatCommandSet" id="FormatShortcutCtrl8Command"
+                editor="guidVSStd97" key1="8" mod1="CONTROL" />
+    <KeyBinding guid="guidTcFormatCommandSet" id="FormatShortcutCtrl9Command"
+                editor="guidVSStd97" key1="9" mod1="CONTROL" />
+  </KeyBindings>
+
+  <Symbols>
+    <GuidSymbol name="guidTcFormatPackage" value="{7c56c40e-00aa-42dc-b3ad-d8918feb83e1}" />
+    <GuidSymbol name="guidTcFormatCommandSet" value="{18ccaad0-d88c-4f1c-b6de-eff263bea1b7}">
+      <IDSymbol name="TcFormatToolsGroup" value="0x1020" />
+      <IDSymbol name="TcFormatEditorContextGroup" value="0x1021" />
+      <IDSymbol name="TcFormatItemContextGroup" value="0x1022" />
+      <IDSymbol name="TcFormatFolderContextGroup" value="0x1023" />
+      <IDSymbol name="TcFormatProjectContextGroup" value="0x1024" />
+      <IDSymbol name="FormatActiveDocumentCommand" value="0x0100" />
+      <IDSymbol name="FormatSolutionSelectionCommand" value="0x0101" />
+      <IDSymbol name="FormatShortcutCtrlRThenCtrlFCommand" value="0x0110" />
+      <IDSymbol name="FormatShortcutCtrl1Command" value="0x0111" />
+      <IDSymbol name="FormatShortcutCtrl2Command" value="0x0112" />
+      <IDSymbol name="FormatShortcutCtrl3Command" value="0x0113" />
+      <IDSymbol name="FormatShortcutCtrl4Command" value="0x0114" />
+      <IDSymbol name="FormatShortcutCtrl5Command" value="0x0115" />
+      <IDSymbol name="FormatShortcutCtrl6Command" value="0x0116" />
+      <IDSymbol name="FormatShortcutCtrl7Command" value="0x0117" />
+      <IDSymbol name="FormatShortcutCtrl8Command" value="0x0118" />
+      <IDSymbol name="FormatShortcutCtrl9Command" value="0x0119" />
+    </GuidSymbol>
+    <GuidSymbol name="guidTwinCatPlcCommandSet" value="{3B11520B-7E70-4008-A6CF-B60AE84E12B1}">
+      <IDSymbol name="TwinCatPlcFolderContextMenu" value="0x9010" />
+      <IDSymbol name="TwinCatPlcFileContextMenu" value="0x9011" />
+      <IDSymbol name="TwinCatPlcProjectContextMenu" value="0x9013" />
+      <IDSymbol name="TwinCatPlcCodeEditorContextMenu" value="0x9017" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>

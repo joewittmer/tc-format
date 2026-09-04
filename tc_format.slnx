@@ -1,0 +1,13 @@
+<Solution>
+  <Project Path="src/TcFormat.Core/TcFormat.Core.csproj" />
+  <Project Path="src/TcFormat.Syntax/TcFormat.Syntax.csproj" />
+  <Project Path="src/TcFormat.TwinCat/TcFormat.TwinCat.csproj" />
+  <Project Path="src/TcFormat.Formatting/TcFormat.Formatting.csproj" />
+  <Project Path="src/TcFormat.Cli/TcFormat.Cli.csproj" />
+  <Project Path="src/TcFormat.Xae/TcFormat.Xae.csproj" />
+  <Project Path="tests/TcFormat.Cli.Tests/TcFormat.Cli.Tests.csproj" />
+  <Project Path="tests/TcFormat.Core.Tests/TcFormat.Core.Tests.csproj" />
+  <Project Path="tests/TcFormat.Syntax.Tests/TcFormat.Syntax.Tests.csproj" />
+  <Project Path="tests/TcFormat.TwinCat.Tests/TcFormat.TwinCat.Tests.csproj" />
+  <Project Path="tests/TcFormat.Formatting.Tests/TcFormat.Formatting.Tests.csproj" />
+</Solution>

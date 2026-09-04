@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-2025
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore tc_format.slnx
+
+      - name: Verify formatting
+        run: dotnet format tc_format.slnx --verify-no-changes --no-restore
+
+      - name: Build
+        run: dotnet build tc_format.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test tc_format.slnx --configuration Release --no-build
+
+      - name: Check NuGet dependencies for known vulnerabilities
+        shell: pwsh
+        run: |
+          $vstoolsPath = (dotnet msbuild src\TcFormat.Xae\TcFormat.Xae.csproj `
+              -getProperty:VSToolsPath `
+              -nologo).Trim()
+          $vssdkTargets = Join-Path $vstoolsPath 'VSSDK\Microsoft.VsSDK.targets'
+          if (-not (Test-Path -LiteralPath $vssdkTargets -PathType Leaf)) {
+              throw "Unable to resolve the Visual Studio SDK targets: $vssdkTargets"
+          }
+
+          $env:VSToolsPath = $vstoolsPath
+          dotnet list tc_format.slnx package `
+              --vulnerable `
+              --include-transitive `
+              --no-restore

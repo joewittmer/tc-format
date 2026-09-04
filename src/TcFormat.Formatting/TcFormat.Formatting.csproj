@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\TcFormat.Core\TcFormat.Core.csproj" />
+    <ProjectReference Include="..\TcFormat.Syntax\TcFormat.Syntax.csproj" />
+  </ItemGroup>
+</Project>
+

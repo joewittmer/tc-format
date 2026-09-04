@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>tc_format</AssemblyName>
+    <RootNamespace>TcFormat.Cli</RootNamespace>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <DebugType>embedded</DebugType>
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TcFormat.Core\TcFormat.Core.csproj" />
+    <ProjectReference Include="..\TcFormat.Formatting\TcFormat.Formatting.csproj" />
+    <ProjectReference Include="..\TcFormat.TwinCat\TcFormat.TwinCat.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="TcFormat.Cli.Tests" />
+  </ItemGroup>
+</Project>
