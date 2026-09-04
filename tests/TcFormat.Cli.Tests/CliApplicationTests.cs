@@ -13,6 +13,23 @@ public sealed class CliApplicationTests : IDisposable
     public CliApplicationTests() => Directory.CreateDirectory(temporaryDirectory);
 
     [Fact]
+    public void VersionContainsExactlyFourNumericFields()
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var exitCode = CliApplication.Run(
+            ["--version"],
+            new StringReader(string.Empty),
+            output,
+            error);
+
+        Assert.Equal(0, exitCode);
+        Assert.Matches(@"^tc_format \d+\.\d+\.\d+\.\d+\r?\n$", output.ToString());
+        Assert.Equal(string.Empty, error.ToString());
+    }
+
+    [Fact]
     public void StdinFilepathFormatsRawStructuredTextWithoutWritingBackingFile()
     {
         var filePath = Path.Combine(temporaryDirectory, "Example.TcPOU");

@@ -1,6 +1,6 @@
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011">
   <Metadata>
-    <Identity Id="TcFormat.Xae.7c56c40e-00aa-42dc-b3ad-d8918feb83e1" Version="1.0.0.0" Language="en-US" Publisher="tc_format contributors" />
+    <Identity Id="TcFormat.Xae.7c56c40e-00aa-42dc-b3ad-d8918feb83e1" Version="1.0.1.0" Language="en-US" Publisher="tc_format contributors" />
     <DisplayName>tc_format for TwinCAT XAE</DisplayName>
     <Description xml:space="preserve">Formats the active TwinCAT Structured Text editor with the tc_format CLI.</Description>
     <License>LICENSE</License>
