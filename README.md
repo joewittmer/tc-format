@@ -1,6 +1,6 @@
 # tc_format
 
-`tc_format` is an opinionated formatter built specifically for Structured Text
+`tc_format` is a configurable formatter built specifically for Structured Text
 source files in PLC projects created with [Beckhoff TwinCAT 3][beckhoff-twincat].
 It is not intended to be a general-purpose IEC 61131-3 formatter.
 
