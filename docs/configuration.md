@@ -22,8 +22,8 @@ Choose a complete profile and copy it to your Structured Text project root as
   line after `ELSE`**, even when its first statement is another `IF` or a loop.
 - [More whitespace without assignment alignment](../examples/more-whitespace-without-assignment-alignment.editorconfig)
   uses the same layout, but keeps single spaces around `:=` and `=>` in assignments,
-  declaration initializers, and named parameters. Declaration-colon alignment
-  remains enabled.
+  declaration initializers, and named parameters. It also disables padding before
+  declaration colons in `VAR`, `VAR_INPUT`, and other variable blocks.
 
 Use the annotations in your chosen profile to adjust its settings to your
 preferences. Each setting includes an explanation, accepted values, and the
@@ -171,6 +171,7 @@ tc_format_align_assignments = false
 tc_format_align_declaration_initializers = false
 tc_format_align_named_inputs = false
 tc_format_align_named_outputs = false
+tc_format_align_declarations = false
 ```
 
 It retains the blank lines while avoiding extra padding before `:=` and `=>`:

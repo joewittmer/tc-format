@@ -41,7 +41,7 @@ Three complete, annotated profiles are included:
 
 All use four-space indentation, hanging call alignment, and `always` initializer
 wrapping, which puts each array entry or structure field on a continuation line.
-The third profile disables `:=` and `=>` alignment while retaining declaration-colon alignment. Each option has
+The third profile disables declaration-colon, `:=`, and `=>` alignment. Each option has
 comments explaining its purpose, accepted values, and built-in default; the
 selected profile values may differ from those defaults.
 

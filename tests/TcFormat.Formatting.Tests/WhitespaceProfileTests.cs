@@ -158,12 +158,26 @@ public sealed class WhitespaceProfileTests
         const string source = "VAR\nshort : INT := 1;\nlongName : LREAL := 2;\nEND_VAR\n" +
                               "IF ready THEN\nx := 1;\nlongName := 2;\nMove(Position := target,\nv := speed);\n" +
                               "Read(Position => target,\nv => speed);\nEND_IF";
-        var expected = "VAR\r\n    short    : INT " + initializerPadding + ":= 1;\r\n    longName : LREAL := 2;\r\nEND_VAR\r\n\r\n" +
+        var declarationPadding = profile == "more-whitespace" ? "   " : "";
+        var expected = "VAR\r\n    short " + declarationPadding + ": INT " + initializerPadding + ":= 1;\r\n    longName : LREAL := 2;\r\nEND_VAR\r\n\r\n" +
                        "IF ready THEN\r\n    x " + assignmentPadding + ":= 1;\r\n    longName := 2;\r\n" +
                        "    Move(Position := target,\r\n         v " + inputPadding + ":= speed);\r\n\r\n" +
                        "    Read(Position => target,\r\n         v " + inputPadding + "=> speed);\r\n\r\nEND_IF\r\n";
 
         AssertProfileOutput(profile, source, expected);
+    }
+
+    [Fact]
+    public void WithoutAlignmentProfileKeepsMethodInputDeclarationsUnpadded()
+    {
+        const string source = "METHOD PRIVATE Execute_Idle\nVAR_INPUT\n" +
+                              "homeState                     : REFERENCE TO E_HomeState;\n" +
+                              "moveToAbsolutePositionState   : REFERENCE TO E_MoveState;\nEND_VAR";
+        const string expected = "METHOD PRIVATE Execute_Idle\r\nVAR_INPUT\r\n" +
+                                "    homeState : REFERENCE TO E_HomeState;\r\n" +
+                                "    moveToAbsolutePositionState : REFERENCE TO E_MoveState;\r\nEND_VAR\r\n";
+
+        AssertProfileOutput("more-whitespace-without-assignment-alignment", source, expected);
     }
 
     private static void AssertProfileOutput(string profile, string source, string expected)

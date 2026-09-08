@@ -213,7 +213,7 @@ tc_format_blank_line_after_multiline_call = true
 # Options: true, false
 # Default: true
 # Example: short    : INT; / longName : DINT;
-tc_format_align_declarations = true
+tc_format_align_declarations = false
 
 # Align := initializers in declarations.
 # Options: true, false
