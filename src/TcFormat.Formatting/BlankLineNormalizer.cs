@@ -146,7 +146,8 @@ internal static class BlankLineNormalizer
             return BlankLinePolicy.Require;
         }
 
-        return BlankLinePolicy.Preserve;
+        // A short header stays tight unless the following block requires a separator.
+        return after == BlankLinePolicy.Multiline ? BlankLinePolicy.Remove : BlankLinePolicy.Preserve;
     }
 
     private static BlankLinePolicy GetFollowingBlankLinePolicy(
@@ -182,7 +183,7 @@ internal static class BlankLineNormalizer
                 _ => options.AfterDo
             };
             return policy == BlankLinePolicy.Multiline
-                ? line.HasMultilineHeader ? BlankLinePolicy.Require : BlankLinePolicy.Remove
+                ? line.HasMultilineHeader ? BlankLinePolicy.Require : BlankLinePolicy.Multiline
                 : policy;
         }
 

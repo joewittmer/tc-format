@@ -10,6 +10,7 @@ internal static class TokenSpacer
         var output = new List<SyntaxToken>(tokens.Count);
         var line = new List<SyntaxToken>();
         var delimiterDepth = 0;
+        SyntaxToken? previousCode = null;
 
         foreach (var token in tokens)
         {
@@ -19,12 +20,13 @@ internal static class TokenSpacer
                 continue;
             }
 
-            FormatLine(line, output, options, ref delimiterDepth);
+            FormatLine(line, output, options, ref delimiterDepth, previousCode);
+            previousCode = line.LastOrDefault(IsCode) ?? previousCode;
             output.Add(token);
             line.Clear();
         }
 
-        FormatLine(line, output, options, ref delimiterDepth);
+        FormatLine(line, output, options, ref delimiterDepth, previousCode);
         return output;
     }
 
@@ -32,7 +34,8 @@ internal static class TokenSpacer
         IReadOnlyList<SyntaxToken> line,
         ICollection<SyntaxToken> output,
         FormatterOptions options,
-        ref int delimiterDepth)
+        ref int delimiterDepth,
+        SyntaxToken? previousCode)
     {
         if (line.Count == 0)
         {
@@ -96,7 +99,7 @@ internal static class TokenSpacer
         {
             if (index > 0)
             {
-                var spaces = GetSpaces(items, index, options);
+                var spaces = GetSpaces(items, index, options, previousCode);
                 if (spaces > 0)
                 {
                     output.Add(CreateWhitespace(new string(' ', spaces), items[index].Token));
@@ -112,7 +115,7 @@ internal static class TokenSpacer
         }
     }
 
-    private static int GetSpaces(IReadOnlyList<LineItem> items, int currentIndex, FormatterOptions options)
+    private static int GetSpaces(IReadOnlyList<LineItem> items, int currentIndex, FormatterOptions options, SyntaxToken? previousCode)
     {
         var previousIndex = currentIndex - 1;
         var previous = items[previousIndex];
@@ -212,7 +215,7 @@ internal static class TokenSpacer
                 : options.Spacing.AfterDeclarationColon ? 1 : 0;
         }
 
-        if (IsUnarySign(items, previousIndex))
+        if (IsUnarySign(items, previousIndex, previousCode))
         {
             return 0;
         }
@@ -241,20 +244,23 @@ internal static class TokenSpacer
                items.Skip(index + 1).All(item => item.Token.Kind is SyntaxKind.LineComment or SyntaxKind.BlockComment);
     }
 
-    private static bool IsUnarySign(IReadOnlyList<LineItem> items, int index)
+    private static bool IsCode(SyntaxToken token) =>
+        token.Kind is not SyntaxKind.Whitespace and not SyntaxKind.LineComment and not SyntaxKind.BlockComment;
+
+    private static bool IsUnarySign(IReadOnlyList<LineItem> items, int index, SyntaxToken? previousCode)
     {
         if (index < 0 || items[index].Token.Text is not ("+" or "-"))
         {
             return false;
         }
 
-        if (index == 0)
+        if (index == 0 && previousCode is null)
         {
             return true;
         }
 
-        var previous = items[index - 1].Token.Text;
-        return IsOperator(previous) || previous is "(" or "[" or ",";
+        var previous = index == 0 ? previousCode!.Text : items[index - 1].Token.Text;
+        return IsOperator(previous) || previous is "(" or "[" or "," or ";";
     }
 
     private static bool IsOperator(string text) => text is

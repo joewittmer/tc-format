@@ -299,7 +299,12 @@ public sealed class EditorConfigResolver
                     values,
                     diagnostics,
                     ("before", BinaryOperatorPosition.Before),
-                    ("after", BinaryOperatorPosition.After))),
+                    ("after", BinaryOperatorPosition.After)),
+                ExpandMultilineArguments: ReadBoolean(
+                    "tc_format_expand_multiline_arguments",
+                    defaults.Wrapping.ExpandMultilineArguments,
+                    values,
+                    diagnostics)),
             Spacing: new SpacingOptions(
                 BeforeDeclarationColon: ReadBoolean(
                     "tc_format_space_before_declaration_colon",

@@ -49,7 +49,7 @@ public sealed class WhitespaceProfileTests
     public void ProfilesFormatLoopBoundaries(string profile, bool more, string opening, string closing)
     {
         var gap = more ? "\r\n\r\n" : "\r\n";
-        var afterHeader = opening == "REPEAT" ? gap : "\r\n";
+        var afterHeader = gap;
         var expected = "Prepare();" + gap + opening + afterHeader +
                        "    value := 1;" + gap + closing + gap + "done := TRUE;\r\n";
         var source = $"Prepare();\n\n{opening}\n\nvalue := 1;\n\n{closing}\n\ndone := TRUE;";
@@ -58,8 +58,28 @@ public sealed class WhitespaceProfileTests
     }
 
     [Theory]
+    [InlineData("less-whitespace", false)]
+    [InlineData("more-whitespace", true)]
+    public void ProfilesSeparateNestedLoopsAfterThenAndKeepElseTight(string profile, bool more)
+    {
+        var gap = more ? "\r\n\r\n" : "\r\n";
+        const string source = "IF axesAreSimulated THEN\nFOR i := 0 TO count - 1 DO\n" +
+                              "IF NOT simulated THEN\naxesAreSimulated := FALSE;\nEXIT;\nEND_IF\nEND_FOR\n" +
+                              "ELSE\n\nFOR i := 0 TO count - 1 DO\nRun();\nEND_FOR\nEND_IF";
+        var expected = "IF axesAreSimulated THEN" + gap +
+                       "    FOR i := 0 TO count - 1 DO" + gap +
+                       "        IF NOT simulated THEN\r\n            axesAreSimulated := FALSE;\r\n" +
+                       "            EXIT;" + gap + "        END_IF" + gap + "    END_FOR" + gap +
+                       "ELSE\r\n    FOR i := 0 TO count - 1 DO" + gap +
+                       "        Run();" + gap + "    END_FOR" + gap + "END_IF\r\n";
+
+        AssertProfileOutput(profile, source, expected);
+    }
+
+    [Theory]
     [InlineData("less-whitespace")]
     [InlineData("more-whitespace")]
+    [InlineData("more-whitespace-no-assignment-alignment")]
     public void ProfilesExplicitlyConfigureEveryOptionAndKeepSelectedWrapping(string profile)
     {
         var directory = Path.Combine(AppContext.BaseDirectory, "Profiles", profile);
@@ -76,7 +96,7 @@ public sealed class WhitespaceProfileTests
         Assert.Empty(resolved.Options.Validate());
         Assert.Equal(WrapStyle.Always, resolved.Options.Wrapping.Initializers);
         Assert.Equal(WrapStyle.Hanging, resolved.Options.Wrapping.Calls);
-        Assert.Equal(profile == "more-whitespace" ? BlankLinePolicy.Require : BlankLinePolicy.Remove,
+        Assert.Equal(profile.StartsWith("more", StringComparison.Ordinal) ? BlankLinePolicy.Require : BlankLinePolicy.Remove,
             resolved.Options.BlankLines.AfterMultilineCall);
     }
 
@@ -115,6 +135,35 @@ public sealed class WhitespaceProfileTests
         Assert.False(StructuredTextFormatter.Format("REPEAT\nvalue := 1;\nUNTIL done", FormatterOptions.Default).IsValid);
         Assert.False(StructuredTextFormatter.Format("UNTIL done", FormatterOptions.Default).IsValid);
         Assert.False(StructuredTextFormatter.Format("IF ready THEN\nUNTIL done\nEND_IF", FormatterOptions.Default).IsValid);
+    }
+
+    [Theory]
+    [InlineData("less-whitespace", false)]
+    [InlineData("more-whitespace", true)]
+    public void ProfilesConfigureExpandedCalculations(string profile, bool more)
+    {
+        const string source = "pressureSpeedOverride := LREAL_TO_INT(100.0 * _clampingPressureVelocity /\nTO_LREAL(_speedCommandOption));";
+        var expected = more
+            ? "pressureSpeedOverride := LREAL_TO_INT(\r\n    100.0 * _clampingPressureVelocity\r\n    / TO_LREAL(_speedCommandOption)\r\n);\r\n"
+            : "pressureSpeedOverride := LREAL_TO_INT(100.0 * _clampingPressureVelocity /\r\n    TO_LREAL(_speedCommandOption));\r\n";
+
+        AssertProfileOutput(profile, source, expected);
+    }
+
+    [Theory]
+    [InlineData("more-whitespace-no-assignment-alignment", "", "", "")]
+    [InlineData("more-whitespace", "  ", "       ", "       ")]
+    public void MoreWhitespaceProfilesChooseAssignmentAlignment(string profile, string initializerPadding, string assignmentPadding, string inputPadding)
+    {
+        const string source = "VAR\nshort : INT := 1;\nlongName : LREAL := 2;\nEND_VAR\n" +
+                              "IF ready THEN\nx := 1;\nlongName := 2;\nMove(Position := target,\nv := speed);\n" +
+                              "Read(Position => target,\nv => speed);\nEND_IF";
+        var expected = "VAR\r\n    short    : INT " + initializerPadding + ":= 1;\r\n    longName : LREAL := 2;\r\nEND_VAR\r\n\r\n" +
+                       "IF ready THEN\r\n    x " + assignmentPadding + ":= 1;\r\n    longName := 2;\r\n" +
+                       "    Move(Position := target,\r\n         v " + inputPadding + ":= speed);\r\n\r\n" +
+                       "    Read(Position => target,\r\n         v " + inputPadding + "=> speed);\r\n\r\nEND_IF\r\n";
+
+        AssertProfileOutput(profile, source, expected);
     }
 
     private static void AssertProfileOutput(string profile, string source, string expected)

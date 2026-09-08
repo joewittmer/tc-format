@@ -152,7 +152,7 @@ tc_format_blank_line_before_end_case = true
 # Options: true, false, preserve, multiline
 # Default: false
 # multiline requires a blank line only for a header spanning multiple formatted
-# lines and removes it for a single-line header.
+# lines and removes it for a single-line header unless the next block requires it.
 tc_format_blank_line_after_if_then = multiline
 
 # Blank line after an ELSIF header's THEN.
@@ -163,7 +163,7 @@ tc_format_blank_line_after_elsif_then = multiline
 # Blank line after a FOR or WHILE header's DO.
 # Options: true, false, preserve, multiline
 # Default: false
-tc_format_blank_line_after_do = multiline
+tc_format_blank_line_after_do = true
 
 # Blank line after a CASE-arm label whose colon ends the line.
 # Options: true, false, preserve
@@ -257,6 +257,13 @@ tc_format_align_end_of_line_comments = true
 # Default: hanging
 tc_format_wrap_calls = hanging
 
+# Expand calls when an individual argument spans multiple lines.
+# Places arguments below the opening parenthesis and the closing parenthesis
+# on its own line. Simple arguments on separate lines keep their call layout.
+# Options: true, false
+# Default: false
+tc_format_expand_multiline_arguments = true
+
 # Array and structure initializer wrapping.
 # Options:
 #   when_long - Wrap when max_line_length is exceeded.
@@ -280,7 +287,8 @@ tc_format_wrap_binary_expressions = preserve
 #   before - Put the operator at the beginning of the continuation line.
 #   after - Put the operator at the end of the preceding line.
 # Default: before
-tc_format_binary_operator_position = after
+# Also positions existing breaks inside expanded arguments, without crossing comments.
+tc_format_binary_operator_position = before
 
 # Spacing
 # Each boolean spacing option inserts one space when true and removes it when

@@ -31,23 +31,24 @@ and project configuration.
 
 ## Choose a formatting profile
 
-Two complete, annotated profiles are included:
+Three complete, annotated profiles are included:
 
 | Profile | Layout |
 | --- | --- |
 | [Less whitespace](examples/less-whitespace.editorconfig) | Keeps control-flow boundaries compact and removes blank lines after multiline calls. |
-| [More whitespace](examples/more-whitespace.editorconfig) | Separates control-flow sections, multiline headers, and multiline calls with blank lines. Short headers stay close to their bodies, and no blank line follows `ELSE`. |
+| [More whitespace](examples/more-whitespace.editorconfig) | Separates control-flow sections, multiline conditions, and multiline calls with blank lines. Expands multiline arguments with leading operators, adds a blank line after `DO`, and keeps `ELSE` tight. |
+| [More whitespace without assignment alignment](examples/more-whitespace-no-assignment-alignment.editorconfig) | Uses the more-whitespace layout with single spaces around `:=` and `=>`, without padding assignments, declaration initializers, or named parameters into columns. |
 
-Both use four-space indentation, hanging call alignment, and `always` initializer
+All use four-space indentation, hanging call alignment, and `always` initializer
 wrapping, which puts each array entry or structure field on a continuation line.
-They share the same horizontal spacing and alignment settings. Each option has
+The third profile disables `:=` and `=>` alignment while retaining declaration-colon alignment. Each option has
 comments explaining its purpose, accepted values, and built-in default; the
 selected profile values may differ from those defaults.
 
 Copy the chosen file to your Structured Text project root as `.editorconfig`,
 or merge its section into an existing `.editorconfig`. The example filenames
 are not discovered automatically. The installer and portable archive include
-both profiles in their `examples` directory.
+all three profiles in their `examples` directory.
 
 For example, the more-whitespace profile produces this layout:
 

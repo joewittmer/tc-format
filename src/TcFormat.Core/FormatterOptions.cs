@@ -94,7 +94,8 @@ public sealed record WrappingOptions(
     WrapStyle Calls,
     WrapStyle Initializers,
     WrapStyle BinaryExpressions,
-    BinaryOperatorPosition BinaryOperatorPosition);
+    BinaryOperatorPosition BinaryOperatorPosition,
+    bool ExpandMultilineArguments = false);
 
 public sealed record SpacingOptions(
     bool BeforeDeclarationColon,

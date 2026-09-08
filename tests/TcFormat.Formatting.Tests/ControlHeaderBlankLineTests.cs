@@ -116,6 +116,24 @@ public sealed class ControlHeaderBlankLineTests
             "IF first AND\r\n    second THEN\r\n    IF ready THEN\r\n        Run();\r\n    END_IF\r\nEND_IF\r\n", Options());
     }
 
+    [Theory]
+    [InlineData(BlankLinePolicy.Multiline, "\r\n\r\n")]
+    [InlineData(BlankLinePolicy.Remove, "\r\n")]
+    public void RequiredLoopSeparatorOverridesOnlyConditionalHeaderSpacing(BlankLinePolicy afterThen, string gap)
+    {
+        var options = Options() with
+        {
+            BlankLines = Options().BlankLines with
+            {
+                AfterIfThen = afterThen,
+                BeforeLoop = BlankLinePolicy.Require
+            }
+        };
+        AssertFormatted("IF ready THEN\n\nFOR i := 1 TO 3 DO\nRun();\nEND_FOR\nEND_IF",
+            "IF ready THEN" + gap + "    FOR i := 1 TO 3 DO\r\n        Run();\r\n    END_FOR\r\nEND_IF\r\n",
+            options);
+    }
+
     private static FormatterOptions Options() => FormatterOptions.Default with
     {
         Layout = FormatterOptions.Default.Layout with { MaximumLineLength = 0 },

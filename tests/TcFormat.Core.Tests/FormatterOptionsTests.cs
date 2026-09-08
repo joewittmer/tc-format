@@ -84,6 +84,7 @@ public sealed class FormatterOptionsTests
     [Theory]
     [InlineData("less-whitespace.editorconfig")]
     [InlineData("more-whitespace.editorconfig")]
+    [InlineData("more-whitespace-no-assignment-alignment.editorconfig")]
     public void WhitespaceProfileExplicitlySetsEverySupportedOption(string profile)
     {
         var editorConfigPath = Path.Combine(AppContext.BaseDirectory, profile);
@@ -97,6 +98,7 @@ public sealed class FormatterOptionsTests
     [Theory]
     [InlineData("less-whitespace.editorconfig")]
     [InlineData("more-whitespace.editorconfig")]
+    [InlineData("more-whitespace-no-assignment-alignment.editorconfig")]
     public void WhitespaceProfileKeepsSharedFormattingChoices(string profile)
     {
         var editorConfigPath = Path.Combine(AppContext.BaseDirectory, profile);
@@ -108,12 +110,16 @@ public sealed class FormatterOptionsTests
         Assert.Equal("hanging", configuredValues["tc_format_wrap_calls"]);
         Assert.Equal("always", configuredValues["tc_format_wrap_initializers"]);
         Assert.Equal("preserve", configuredValues["tc_format_wrap_binary_expressions"]);
-        Assert.Equal("after", configuredValues["tc_format_binary_operator_position"]);
+        Assert.Equal(profile.StartsWith("more", StringComparison.Ordinal) ? "before" : "after",
+            configuredValues["tc_format_binary_operator_position"]);
+        Assert.Equal(profile.StartsWith("more", StringComparison.Ordinal) ? "true" : "false",
+            configuredValues["tc_format_expand_multiline_arguments"]);
     }
 
     [Theory]
     [InlineData("less-whitespace.editorconfig")]
     [InlineData("more-whitespace.editorconfig")]
+    [InlineData("more-whitespace-no-assignment-alignment.editorconfig")]
     public void WhitespaceProfileAnnotatesEveryOptionWithAcceptedValuesAndBuiltInDefault(string profile)
     {
         var annotations = new List<string>();

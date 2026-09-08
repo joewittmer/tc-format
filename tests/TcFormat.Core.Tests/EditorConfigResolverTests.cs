@@ -315,6 +315,25 @@ public sealed class EditorConfigResolverTests
         Assert.Equal(WrapStyle.Always, result.Options.Wrapping.BinaryExpressions);
     }
 
+    [Theory]
+    [InlineData("true", true, true)]
+    [InlineData("false", false, true)]
+    [InlineData("sometimes", false, false)]
+    public void ResolvesExpandedMultilineArguments(string value, bool expected, bool valid)
+    {
+        using var directory = new TemporaryDirectory();
+        directory.Write(".editorconfig", "root = true\n[*.st]\ntc_format_expand_multiline_arguments = " + value);
+        var sourcePath = directory.Write("Example.st", string.Empty);
+        var result = new EditorConfigResolver().Resolve(sourcePath);
+
+        Assert.Equal(valid, result.IsValid);
+        Assert.Equal(expected, result.Options.Wrapping.ExpandMultilineArguments);
+        if (!valid)
+        {
+            Assert.Contains(result.Diagnostics, diagnostic => diagnostic.PropertyName == "tc_format_expand_multiline_arguments");
+        }
+    }
+
     [Fact]
     public void MaximumLineLengthCanBeDisabled()
     {

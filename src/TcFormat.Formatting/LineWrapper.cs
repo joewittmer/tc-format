@@ -30,7 +30,7 @@ internal static class LineWrapper
             return tokens;
         }
 
-        var output = tokens.ToList();
+        var output = NormalizeExpandedOperators(tokens, options).ToList();
         var maximumBreaks = tokens.Count;
         for (var attempt = 0; attempt < maximumBreaks; attempt++)
         {
@@ -38,13 +38,13 @@ internal static class LineWrapper
             var candidate = SelectCandidate(analysis, options.Layout.MaximumLineLength);
             if (candidate is null)
             {
-                return output;
+                return IndentExpandedArguments(output, options);
             }
 
             ApplyBreak(output, candidate);
         }
 
-        return output;
+        return IndentExpandedArguments(output, options);
     }
 
     private static LayoutAnalysis Analyze(IReadOnlyList<SyntaxToken> tokens, FormatterOptions options)
@@ -149,6 +149,160 @@ internal static class LineWrapper
         }
 
         return new LayoutAnalysis(lines, candidates);
+    }
+
+    private static IReadOnlyList<SyntaxToken> NormalizeExpandedOperators(
+        IReadOnlyList<SyntaxToken> tokens, FormatterOptions options)
+    {
+        if (!options.Wrapping.ExpandMultilineArguments)
+        {
+            return tokens;
+        }
+
+        var output = tokens.ToList();
+        var expandedScopes = new Stack<bool>();
+        var changed = false;
+        SyntaxToken? previous = null;
+        for (var index = 0; index < output.Count; index++)
+        {
+            var token = output[index];
+            if (token.Kind is SyntaxKind.Whitespace or SyntaxKind.NewLine or SyntaxKind.LineComment or SyntaxKind.BlockComment)
+            {
+                continue;
+            }
+
+            if (token.Text is "(" or "[")
+            {
+                expandedScopes.Push(token.Text == "(" && IsCallable(previous) && HasMultilineArgument(output, index));
+            }
+            else if (token.Text is ")" or "]")
+            {
+                if (expandedScopes.Count > 0)
+                {
+                    expandedScopes.Pop();
+                }
+            }
+            else if (expandedScopes.Contains(true) && IsBinaryOperator(output, index))
+            {
+                var left = index - 1;
+                var right = index + 1;
+                while (left >= 0 && output[left].Kind is SyntaxKind.Whitespace or SyntaxKind.NewLine)
+                {
+                    left--;
+                }
+
+                while (right < output.Count && output[right].Kind is SyntaxKind.Whitespace or SyntaxKind.NewLine)
+                {
+                    right++;
+                }
+
+                if (left >= 0 && right < output.Count &&
+                    output[left].Kind is not SyntaxKind.LineComment and not SyntaxKind.BlockComment &&
+                    output[right].Kind is not SyntaxKind.LineComment and not SyntaxKind.BlockComment)
+                {
+                    var breakBefore = output.Skip(left + 1).Take(index - left - 1).Any(t => t.Kind == SyntaxKind.NewLine);
+                    var breakAfter = output.Skip(index + 1).Take(right - index - 1).Any(t => t.Kind == SyntaxKind.NewLine);
+                    if (options.Wrapping.BinaryOperatorPosition == BinaryOperatorPosition.Before && breakAfter && !breakBefore)
+                    {
+                        output.RemoveAt(index);
+                        output.Insert(right - 1, token);
+                        index = right - 1;
+                        changed = true;
+                    }
+                    else if (options.Wrapping.BinaryOperatorPosition == BinaryOperatorPosition.After && breakBefore && !breakAfter)
+                    {
+                        output.RemoveRange(index, right - index);
+                        output.Insert(left + 1, token);
+                        index = left + 1;
+                        changed = true;
+                    }
+                }
+            }
+
+            previous = token;
+        }
+
+        return changed ? TokenSpacer.Apply(output, options) : tokens;
+    }
+
+    private static IReadOnlyList<SyntaxToken> IndentExpandedArguments(
+        IReadOnlyList<SyntaxToken> tokens, FormatterOptions options)
+    {
+        if (!options.Wrapping.ExpandMultilineArguments)
+        {
+            return tokens;
+        }
+
+        var output = new List<SyntaxToken>();
+        var scopes = new List<(bool Expanded, string Indentation, string? HangingIndentation)>();
+        SyntaxToken? previous = null;
+        foreach (var line in CreateLines(tokens, options.Indentation.TabWidth))
+        {
+            var start = line.Start;
+            while (start < line.End && tokens[start].Kind == SyntaxKind.Whitespace)
+            {
+                start++;
+            }
+
+            if (start == line.End)
+            {
+                output.AddRange(tokens.Skip(line.Start).Take(line.End - line.Start));
+            }
+
+            var indentation = line.LeadingWhitespace;
+            if (start < line.End && !line.ContainsMultilineToken && scopes.Any(scope => scope.Expanded))
+            {
+                var parent = scopes.Last(scope => scope.Expanded || scope.HangingIndentation is not null);
+                indentation = parent.HangingIndentation ??
+                    (tokens[start].Text is ")" or "]" && scopes[^1].Expanded
+                        ? parent.Indentation
+                        : GetContinuationIndentation(line, parent.Indentation, options));
+            }
+
+            if (start < line.End && indentation.Length > 0)
+            {
+                output.Add(new SyntaxToken(SyntaxKind.Whitespace, indentation,
+                    tokens[start].Offset, tokens[start].Line, -1));
+            }
+
+            for (var index = start; index < line.End; index++)
+            {
+                var token = tokens[index];
+                output.Add(token);
+                if (token.Kind is SyntaxKind.Whitespace or SyntaxKind.LineComment or SyntaxKind.BlockComment)
+                {
+                    continue;
+                }
+
+                if (token.Text is "(" or "[")
+                {
+                    var call = token.Text == "(" && IsCallable(previous);
+                    var expanded = call && HasMultilineArgument(tokens, index);
+                    string? hanging = null;
+                    if (call && !expanded && options.Wrapping.Calls == WrapStyle.Hanging &&
+                        HasMultipleItems(tokens, index) && HasFirstItemOnOpeningLine(tokens, index))
+                    {
+                        hanging = indentation + GetHangingIndentation(tokens, line, index, options.Indentation.TabWidth)
+                            [line.LeadingWhitespace.Length..];
+                    }
+
+                    scopes.Add((expanded, indentation, hanging));
+                }
+                else if (token.Text is ")" or "]" && scopes.Count > 0)
+                {
+                    scopes.RemoveAt(scopes.Count - 1);
+                }
+
+                previous = token;
+            }
+
+            if (line.End < tokens.Count)
+            {
+                output.Add(tokens[line.End]);
+            }
+        }
+
+        return output;
     }
 
     private static BreakCandidate? SelectCandidate(LayoutAnalysis analysis, int maximumLineLength)
@@ -378,6 +532,12 @@ internal static class LineWrapper
             _ => WrapStyle.Preserve
         };
 
+        if (kind == DelimiterKind.Call && options.Wrapping.ExpandMultilineArguments &&
+            HasMultilineArgument(tokens, openingIndex))
+        {
+            style = WrapStyle.Always;
+        }
+
         var structuralIndentation = scopes.Count > 0
             ? scopes[0].BaseIndentation
             : line.LeadingWhitespace;
@@ -444,6 +604,61 @@ internal static class LineWrapper
             if (depth == 0 && token.Text == ",")
             {
                 return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasMultilineArgument(IReadOnlyList<SyntaxToken> tokens, int openingIndex)
+    {
+        var depth = 0;
+        var hasContent = false;
+        var hasBreak = false;
+        for (var index = openingIndex + 1; index < tokens.Count; index++)
+        {
+            var token = tokens[index];
+            if (token.Kind == SyntaxKind.Whitespace)
+            {
+                continue;
+            }
+
+            if (token.Kind == SyntaxKind.NewLine)
+            {
+                hasBreak |= hasContent;
+                continue;
+            }
+
+            if (depth == 0 && token.Text is ")" or "]")
+            {
+                return false;
+            }
+
+            if (depth == 0 && token.Text == ",")
+            {
+                hasContent = false;
+                hasBreak = false;
+                continue;
+            }
+
+            if (hasBreak)
+            {
+                return true;
+            }
+
+            hasContent = true;
+            if (token.Kind is SyntaxKind.LineComment or SyntaxKind.BlockComment)
+            {
+                continue;
+            }
+
+            if (token.Text is "(" or "[")
+            {
+                depth++;
+            }
+            else if (token.Text is ")" or "]")
+            {
+                depth--;
             }
         }
 
@@ -563,7 +778,13 @@ internal static class LineWrapper
             return true;
         }
 
-        if (!TryFindPreviousCodeOnLine(tokens, index - 1, out var previousIndex))
+        var previousIndex = index - 1;
+        while (previousIndex >= 0 && tokens[previousIndex].Kind is SyntaxKind.Whitespace or SyntaxKind.NewLine)
+        {
+            previousIndex--;
+        }
+
+        if (previousIndex < 0)
         {
             return false;
         }
@@ -571,7 +792,7 @@ internal static class LineWrapper
         var previous = tokens[previousIndex].Text.ToUpperInvariant();
         return previous is not ("(" or "[" or "," or ":" or ":=" or "=>" or "REF=" or "=" or
             "<" or ">" or "<=" or ">=" or "<>" or "+" or "-" or "*" or "/" or "**" or "&" or
-            "AND" or "AND_THEN" or "OR" or "OR_ELSE" or "XOR" or "MOD" or "THEN" or "DO" or "OF");
+            "AND" or "AND_THEN" or "OR" or "OR_ELSE" or "XOR" or "MOD" or "THEN" or "DO" or "OF" or ";");
     }
 
     private static IReadOnlyList<LineInfo> CreateLines(IReadOnlyList<SyntaxToken> tokens, int tabWidth)
@@ -736,6 +957,7 @@ internal static class LineWrapper
     }
 
     private static bool AllWrappingIsPreserved(FormatterOptions options) =>
+        !options.Wrapping.ExpandMultilineArguments &&
         options.Wrapping.Calls == WrapStyle.Preserve &&
         options.Wrapping.Initializers == WrapStyle.Preserve &&
         options.Wrapping.BinaryExpressions == WrapStyle.Preserve;

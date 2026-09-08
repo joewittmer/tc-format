@@ -1,4 +1,4 @@
-# Less whitespace: keep control-flow boundaries and calls compact.
+# More whitespace without assignment alignment: keep single spaces around := and =>.
 # Copy this file to your project root as .editorconfig.
 # Every option includes its description, accepted values, and built-in default.
 # Assigned values select this profile and can differ from the built-in defaults.
@@ -106,32 +106,32 @@ tc_format_blank_line_before_var = true
 # Blank line before IF.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_before_if = false
+tc_format_blank_line_before_if = true
 
 # Blank line before CASE.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_before_case = false
+tc_format_blank_line_before_case = true
 
 # Blank line before ELSE in an IF statement.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_before_if_else = false
+tc_format_blank_line_before_if_else = true
 
 # Blank line before ELSE in a CASE statement.
 # Options: true, false, preserve
 # Default: true
-tc_format_blank_line_before_case_else = false
+tc_format_blank_line_before_case_else = true
 
 # Blank line before ELSIF.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_before_elsif = false
+tc_format_blank_line_before_elsif = true
 
 # Blank line before a CASE-arm label.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_before_case_label = false
+tc_format_blank_line_before_case_label = true
 
 # Blank line before END_VAR.
 # Options: true, false, preserve
@@ -141,61 +141,61 @@ tc_format_blank_line_before_end_var = false
 # Blank line before END_IF.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_before_end_if = false
+tc_format_blank_line_before_end_if = true
 
 # Blank line before END_CASE.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_before_end_case = false
+tc_format_blank_line_before_end_case = true
 
 # Blank line after an IF header's THEN, including when THEN is on a later line.
 # Options: true, false, preserve, multiline
 # Default: false
 # multiline requires a blank line only for a header spanning multiple formatted
 # lines and removes it for a single-line header unless the next block requires it.
-tc_format_blank_line_after_if_then = false
+tc_format_blank_line_after_if_then = multiline
 
 # Blank line after an ELSIF header's THEN.
 # Options: true, false, preserve, multiline
 # Default: false
-tc_format_blank_line_after_elsif_then = false
+tc_format_blank_line_after_elsif_then = multiline
 
 # Blank line after a FOR or WHILE header's DO.
 # Options: true, false, preserve, multiline
 # Default: false
-tc_format_blank_line_after_do = false
+tc_format_blank_line_after_do = true
 
 # Blank line after a CASE-arm label whose colon ends the line.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_after_case_label = false
+tc_format_blank_line_after_case_label = true
 
 # Blank line before FOR, WHILE, and REPEAT.
 # Options: true, false, preserve
 # Default: preserve
-tc_format_blank_line_before_loop = false
+tc_format_blank_line_before_loop = true
 
 # Blank line after REPEAT.
 # Options: true, false, preserve
 # Default: preserve
-tc_format_blank_line_after_repeat = false
+tc_format_blank_line_after_repeat = true
 
 # Blank line before UNTIL.
 # Options: true, false, preserve
 # Default: preserve
-tc_format_blank_line_before_until = false
+tc_format_blank_line_before_until = true
 
 # Blank line before END_FOR, END_WHILE, and END_REPEAT.
 # Options: true, false, preserve
 # Default: preserve
-tc_format_blank_line_before_end_loop = false
+tc_format_blank_line_before_end_loop = true
 
 # Blank line after END_IF, END_CASE, END_FOR, END_WHILE, and END_REPEAT.
 # Options: true, false, preserve
 # Default: preserve
 # If a boundary also has a before-keyword policy, false takes precedence.
 # ELSE always keeps its following content directly beneath it.
-tc_format_blank_line_after_control_flow_block = false
+tc_format_blank_line_after_control_flow_block = true
 
 # Blank line after a standalone call that spans multiple formatted lines.
 # Options: true, false, preserve
@@ -203,7 +203,7 @@ tc_format_blank_line_after_control_flow_block = false
 # Includes calls expanded by wrapping. Calls within declarations, assignments,
 # and other expressions do not create a boundary. Closing-keyword policies
 # still take precedence when false, and the maximum blank-line count applies.
-tc_format_blank_line_after_multiline_call = false
+tc_format_blank_line_after_multiline_call = true
 
 # Vertical alignment
 # Alignment applies to short, compatible groups and is skipped for the entire
@@ -218,22 +218,22 @@ tc_format_align_declarations = true
 # Align := initializers in declarations.
 # Options: true, false
 # Default: true
-tc_format_align_declaration_initializers = true
+tc_format_align_declaration_initializers = false
 
 # Align top-level statement assignment operators.
 # Options: true, false
 # Default: true
-tc_format_align_assignments = true
+tc_format_align_assignments = false
 
 # Align named input := operators within a multiline call.
 # Options: true, false
 # Default: true
-tc_format_align_named_inputs = true
+tc_format_align_named_inputs = false
 
 # Align named output => operators within a multiline call.
 # Options: true, false
 # Default: true
-tc_format_align_named_outputs = true
+tc_format_align_named_outputs = false
 
 # Align AT keywords in directly addressed declarations.
 # Options: true, false
@@ -262,7 +262,7 @@ tc_format_wrap_calls = hanging
 # on its own line. Simple arguments on separate lines keep their call layout.
 # Options: true, false
 # Default: false
-tc_format_expand_multiline_arguments = false
+tc_format_expand_multiline_arguments = true
 
 # Array and structure initializer wrapping.
 # Options:
@@ -288,7 +288,7 @@ tc_format_wrap_binary_expressions = preserve
 #   after - Put the operator at the end of the preceding line.
 # Default: before
 # Also positions existing breaks inside expanded arguments, without crossing comments.
-tc_format_binary_operator_position = after
+tc_format_binary_operator_position = before
 
 # Spacing
 # Each boolean spacing option inserts one space when true and removes it when

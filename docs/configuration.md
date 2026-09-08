@@ -15,17 +15,22 @@ Choose a complete profile and copy it to your Structured Text project root as
   boundaries tight, removing blank lines at those boundaries.
 - [More whitespace](../examples/more-whitespace.editorconfig) inserts one blank
   line before control-flow headers, around case labels and closing control-flow
-  keywords, and after multiline calls. Short `IF`, `ELSIF`, `FOR`, and `WHILE`
-  headers stay close to their bodies; multiline headers get one blank line after
-  `THEN` or `DO`. `REPEAT` retains its following blank line. There is **no blank
+  keywords, and after multiline calls. Short `IF` and `ELSIF` headers stay close
+  to ordinary statements; multiline conditions and nested blocks get a separator.
+  `FOR` and `WHILE` always get a blank line after `DO`.
+  `REPEAT` retains its following blank line. There is **no blank
   line after `ELSE`**, even when its first statement is another `IF` or a loop.
+- [More whitespace without assignment alignment](../examples/more-whitespace-no-assignment-alignment.editorconfig)
+  uses the same layout, but keeps single spaces around `:=` and `=>` in assignments,
+  declaration initializers, and named parameters. Declaration-colon alignment
+  remains enabled.
 
 Use the annotations in your chosen profile to adjust its settings to your
 preferences. Each setting includes an explanation, accepted values, and the
 built-in default, so you can customize the profile directly in `.editorconfig`.
 
-Both profiles use four-space indentation, the same horizontal spacing and
-alignment options, `always` initializer wrapping, and `hanging` call wrapping.
+All profiles use four-space indentation, single spaces around operators,
+`always` initializer wrapping, and `hanging` call wrapping.
 They retain up to one manually inserted blank line between ordinary statements.
 The more-whitespace profile keeps variable declarations compact. These files
 take effect only when copied or merged into a discovered `.editorconfig` file;
@@ -64,16 +69,17 @@ END_IF
 Finish();
 ```
 
-The more-whitespace profile uses `multiline` for these existing settings:
+The more-whitespace profile uses these header settings:
 
 ```ini
 tc_format_blank_line_after_if_then = multiline
 tc_format_blank_line_after_elsif_then = multiline
-tc_format_blank_line_after_do = multiline
+tc_format_blank_line_after_do = true
 ```
 
-This mode adds one blank line after a multiline header and removes it after a
-single-line header. It uses the final formatted layout, including line breaks
+The `multiline` mode adds one blank line after a multiline header and removes it
+after a single-line header unless the next block requires a blank line before it.
+It uses the final formatted layout, including line breaks
 introduced by call or binary-expression wrapping. For example:
 
 ```iecst
@@ -87,6 +93,25 @@ ELSIF waiting AND
 
 ELSE
     Stop();
+
+END_IF
+```
+
+For example, a loop directly inside an `IF` gets a separator before `FOR` and
+after `DO`, while the short inner condition stays close to its assignment:
+
+```iecst
+IF axesAreSimulated THEN
+
+    FOR i := 0 TO count - 1 DO
+
+        IF NOT simulated THEN
+            axesAreSimulated := FALSE;
+            EXIT;
+
+        END_IF
+
+    END_FOR
 
 END_IF
 ```
@@ -124,18 +149,73 @@ they do not add spacing rules for exception-handling keywords or `RETURN`/`EXIT`
 
 ## Annotated profiles
 
-Both [less whitespace](../examples/less-whitespace.editorconfig) and
-[more whitespace](../examples/more-whitespace.editorconfig) include every
+The [less whitespace](../examples/less-whitespace.editorconfig),
+[more whitespace](../examples/more-whitespace.editorconfig), and
+[more whitespace without assignment alignment](../examples/more-whitespace-no-assignment-alignment.editorconfig) profiles include every
 supported option, with its description, accepted values, and built-in default
 immediately above the setting. The assigned values select the profile and may
 differ from the documented defaults.
 
-These two files are the complete option references. Copy either one to your
+These files are the complete option references. Copy any one to your
 project root as `.editorconfig`, or merge its section into an existing file.
 Read the annotations above each setting when choosing a value that matches
 your preferred formatting style; the profiles are starting points you can edit.
-Property names and named values are case-insensitive. Tests check both profiles
+Property names and named values are case-insensitive. Tests check all profiles
 for complete option coverage and annotations matching the built-in defaults.
+
+The variant without assignment alignment changes only these settings from the
+more-whitespace profile:
+
+```ini
+tc_format_align_assignments = false
+tc_format_align_declaration_initializers = false
+tc_format_align_named_inputs = false
+tc_format_align_named_outputs = false
+```
+
+It retains the blank lines while avoiding extra padding before `:=` and `=>`:
+
+```iecst
+IF ready THEN
+    result := TRUE;
+    requestedPosition := targetPosition;
+
+END_IF
+```
+
+## Expanded multiline arguments
+
+The more-whitespace profile enables expanded multiline arguments:
+
+```ini
+tc_format_expand_multiline_arguments = true
+tc_format_binary_operator_position = before
+```
+
+When an individual argument spans multiple lines, the call places its arguments
+below the opening parenthesis and its closing parenthesis on a separate line:
+
+```iecst
+pressureSpeedOverride := LREAL_TO_INT(
+    100.0 * _clampingPressureVelocity
+    / TO_LREAL(_speedCommandOption)
+);
+```
+
+The option defaults to `false` and is disabled in the less-whitespace profile.
+It applies to existing multiline arguments and arguments expanded by wrapping,
+including nested calls. It also works with `tc_format_wrap_calls = preserve`.
+Several short arguments on separate lines still use the selected call layout:
+
+```iecst
+Move(Position := target,
+     Velocity := speed);
+```
+
+Operator position remains a separate preference. Inside expanded arguments it
+also moves existing operator breaks, even when binary-expression wrapping is
+`preserve`. It does not move an operator across a comment. Outside expanded
+arguments, operator position controls newly introduced breaks as before.
 
 ## Choosing an initializer layout
 
@@ -164,7 +244,7 @@ axes := [
 `when_long` moves the first entry below the opening delimiter for a long or
 already multiline initializer, then adds breaks as needed for the width limit.
 `preserve` keeps existing breaks and applies ordinary continuation indentation.
-The built-in default remains `when_long`; both profiles select `always`.
+The built-in default remains `when_long`; all profiles select `always`.
 
 Hanging layout leaves short single-line initializers alone. When the first item
 already starts below the opening delimiter, it keeps ordinary continuation

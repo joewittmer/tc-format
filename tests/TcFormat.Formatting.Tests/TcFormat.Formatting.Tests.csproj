@@ -16,5 +16,6 @@
     <ProjectReference Include="..\..\src\TcFormat.Formatting\TcFormat.Formatting.csproj" />
     <None Include="..\..\examples\less-whitespace.editorconfig" Link="Profiles\less-whitespace\.editorconfig" CopyToOutputDirectory="Always" />
     <None Include="..\..\examples\more-whitespace.editorconfig" Link="Profiles\more-whitespace\.editorconfig" CopyToOutputDirectory="Always" />
+    <None Include="..\..\examples\more-whitespace-no-assignment-alignment.editorconfig" Link="Profiles\more-whitespace-no-assignment-alignment\.editorconfig" CopyToOutputDirectory="Always" />
   </ItemGroup>
 </Project>

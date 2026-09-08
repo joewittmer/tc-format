@@ -84,6 +84,7 @@ jobs:
           Copy-Item THIRD-PARTY-NOTICES.md $portableDirectory
           Copy-Item examples\less-whitespace.editorconfig "$portableDirectory\examples"
           Copy-Item examples\more-whitespace.editorconfig "$portableDirectory\examples"
+          Copy-Item examples\more-whitespace-no-assignment-alignment.editorconfig "$portableDirectory\examples"
           Compress-Archive `
               -Path "$portableDirectory\*" `
               -DestinationPath "artifacts\release\tc_format-$version-win-x64.zip"
