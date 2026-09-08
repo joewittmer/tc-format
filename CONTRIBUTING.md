@@ -1,5 +1,7 @@
 # Development and contributing
 
+[Back to README](README.md)
+
 ## Requirements
 
 Development requires the .NET 10 SDK. The Windows installer build additionally
@@ -16,8 +18,9 @@ reviewed against Roslyn on September 4, 2026.
 Roslyn-specific directory overrides and analyzer suppressions are not relevant
 to this codebase and are excluded. Roslyn's .NET Foundation file header is also
 excluded because it does not describe this project's copyright ownership. The
-Structured Text profile in `examples/.editorconfig` is a separate formatter
-configuration and does not inherit the C# convention.
+Structured Text profiles in `examples/less-whitespace.editorconfig` and
+`examples/more-whitespace.editorconfig` are separate formatter configurations
+and do not inherit the C# convention.
 
 Format the solution before submitting a change:
 

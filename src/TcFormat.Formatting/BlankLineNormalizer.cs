@@ -9,7 +9,12 @@ internal static class BlankLineNormalizer
         IReadOnlyList<SyntaxToken> tokens,
         FormatterOptions options)
     {
-        var lines = AnnotateContexts(SplitLines(tokens));
+        var lines = AnnotateControlHeaders(AnnotateContexts(SplitLines(tokens)));
+        if (options.BlankLines.AfterMultilineCall != BlankLinePolicy.Preserve)
+        {
+            lines = AnnotateMultilineCalls(lines);
+        }
+
         var withoutForbiddenBlankLines = RemoveForbiddenBlankLines(lines, options.BlankLines);
         var normalized = AddRequiredBlankLines(withoutForbiddenBlankLines, options.BlankLines);
 
@@ -148,27 +153,40 @@ internal static class BlankLineNormalizer
         TokenLine? line,
         BlankLineOptions options)
     {
+        if (line?.EndsMultilineCall == true)
+        {
+            return options.AfterMultilineCall;
+        }
+
         if (line?.IsCaseLabel == true)
         {
             return options.AfterCaseLabel;
         }
 
-        if (ContainsKeyword(line, "THEN"))
+        if (IsKeyword(line, "REPEAT"))
         {
-            if (IsKeyword(line, "IF"))
-            {
-                return options.AfterIfThen;
-            }
-
-            if (IsKeyword(line, "ELSIF"))
-            {
-                return options.AfterElsifThen;
-            }
+            return options.AfterRepeat;
         }
 
-        return ContainsKeyword(line, "DO")
-            ? options.AfterDo
-            : BlankLinePolicy.Preserve;
+        if (FirstKeyword(line)?.ToUpperInvariant() is "END_IF" or "END_CASE" or "END_FOR" or "END_WHILE" or "END_REPEAT")
+        {
+            return options.AfterControlFlowBlock;
+        }
+
+        if (line?.CompletedHeader is not null)
+        {
+            var policy = line.CompletedHeader switch
+            {
+                "IF" => options.AfterIfThen,
+                "ELSIF" => options.AfterElsifThen,
+                _ => options.AfterDo
+            };
+            return policy == BlankLinePolicy.Multiline
+                ? line.HasMultilineHeader ? BlankLinePolicy.Require : BlankLinePolicy.Remove
+                : policy;
+        }
+
+        return BlankLinePolicy.Preserve;
     }
 
     private static BlankLinePolicy GetPrecedingBlankLinePolicy(
@@ -197,8 +215,155 @@ internal static class BlankLineNormalizer
             "END_VAR" => options.BeforeEndVar,
             "END_IF" => options.BeforeEndIf,
             "END_CASE" => options.BeforeEndCase,
+            "FOR" or "WHILE" or "REPEAT" => options.BeforeLoop,
+            "UNTIL" => options.BeforeUntil,
+            "END_FOR" or "END_WHILE" or "END_REPEAT" => options.BeforeEndLoop,
             _ => BlankLinePolicy.Preserve
         };
+    }
+
+    private static IReadOnlyList<TokenLine> AnnotateControlHeaders(IReadOnlyList<TokenLine> lines)
+    {
+        var output = lines.ToArray();
+        string? header = null;
+        var startLine = 0;
+        var depth = 0;
+
+        for (var lineIndex = 0; lineIndex < output.Length; lineIndex++)
+        {
+            var significant = output[lineIndex].Tokens
+                .Where(token => token.Kind is not SyntaxKind.Whitespace and not SyntaxKind.LineComment and not SyntaxKind.BlockComment)
+                .ToArray();
+            if (depth == 0 && significant.Length > 0)
+            {
+                var first = significant[0];
+                if (first.Kind == SyntaxKind.Keyword && first.Text.ToUpperInvariant() is "IF" or "ELSIF" or "FOR" or "WHILE")
+                {
+                    header = first.Text.ToUpperInvariant();
+                    startLine = lineIndex;
+                }
+            }
+
+            for (var index = 0; index < significant.Length; index++)
+            {
+                var token = significant[index];
+                depth += token.Text switch { "(" or "[" => 1, ")" or "]" => -1, _ => 0 };
+                var terminator = header is "IF" or "ELSIF" ? "THEN" : "DO";
+                if (header is not null && depth == 0 && token.Kind == SyntaxKind.Keyword &&
+                    string.Equals(token.Text, terminator, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (index == significant.Length - 1)
+                    {
+                        output[lineIndex] = output[lineIndex] with
+                        {
+                            CompletedHeader = header,
+                            HasMultilineHeader = lineIndex > startLine
+                        };
+                    }
+
+                    header = null;
+                }
+                else if (depth == 0 && token.Text == ";")
+                {
+                    header = null;
+                }
+            }
+        }
+
+        return output;
+    }
+
+    private static IReadOnlyList<TokenLine> AnnotateMultilineCalls(IReadOnlyList<TokenLine> lines)
+    {
+        var output = lines.ToArray();
+        List<SyntaxToken>? statement = null;
+        var startLine = 0;
+        var depth = 0;
+
+        for (var lineIndex = 0; lineIndex < output.Length; lineIndex++)
+        {
+            var significant = output[lineIndex].Tokens
+                .Where(token => token.Kind is not SyntaxKind.Whitespace and not SyntaxKind.LineComment and not SyntaxKind.BlockComment)
+                .ToArray();
+            if (statement is null && depth == 0 && significant.Length > 0 &&
+                (significant[0].Kind == SyntaxKind.Identifier ||
+                 significant[0].Text.ToUpperInvariant() is "THIS" or "SUPER"))
+            {
+                statement = [];
+                startLine = lineIndex;
+            }
+
+            for (var index = 0; index < significant.Length; index++)
+            {
+                var token = significant[index];
+                statement?.Add(token);
+                depth += token.Text switch
+                {
+                    "(" or "[" => 1,
+                    ")" or "]" => -1,
+                    _ => 0
+                };
+
+                if (depth == 0 && token.Text == ";")
+                {
+                    if (statement is not null && lineIndex > startLine &&
+                        index == significant.Length - 1 && IsStandaloneCall(statement))
+                    {
+                        output[lineIndex] = output[lineIndex] with { EndsMultilineCall = true };
+                    }
+
+                    statement = null;
+                }
+            }
+        }
+
+        return output;
+    }
+
+    private static bool IsStandaloneCall(IReadOnlyList<SyntaxToken> tokens)
+    {
+        var index = 1;
+        while (index < tokens.Count)
+        {
+            if (tokens[index].Text == "." && index + 1 < tokens.Count &&
+                tokens[index + 1].Kind == SyntaxKind.Identifier)
+            {
+                index += 2;
+            }
+            else if (tokens[index].Text == "^")
+            {
+                index++;
+            }
+            else if (tokens[index].Text == "[")
+            {
+                var depth = 1;
+                while (++index < tokens.Count && depth > 0)
+                {
+                    depth += tokens[index].Text switch { "[" => 1, "]" => -1, _ => 0 };
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (index >= tokens.Count || tokens[index].Text != "(")
+        {
+            return false;
+        }
+
+        var parentheses = 1;
+        while (++index < tokens.Count)
+        {
+            parentheses += tokens[index].Text switch { "(" => 1, ")" => -1, _ => 0 };
+            if (parentheses == 0)
+            {
+                return index == tokens.Count - 2 && tokens[index + 1].Text == ";";
+            }
+        }
+
+        return false;
     }
 
     private static IReadOnlyList<TokenLine> AnnotateContexts(IReadOnlyList<TokenLine> lines)
@@ -284,7 +449,7 @@ internal static class BlankLineNormalizer
         "END_CASE" => ControlFlowBlock.Case,
         "END_FOR" => ControlFlowBlock.For,
         "END_WHILE" => ControlFlowBlock.While,
-        "UNTIL" or "END_REPEAT" => ControlFlowBlock.Repeat,
+        "END_REPEAT" => ControlFlowBlock.Repeat,
         "END_STRUCT" => ControlFlowBlock.Struct,
         "END_UNION" => ControlFlowBlock.Union,
         "END_VAR" => ControlFlowBlock.Var,
@@ -319,11 +484,6 @@ internal static class BlankLineNormalizer
 
     private static bool IsKeyword(TokenLine? line, string keyword) =>
         string.Equals(FirstKeyword(line), keyword, StringComparison.OrdinalIgnoreCase);
-
-    private static bool ContainsKeyword(TokenLine? line, string keyword) =>
-        line is not null && line.Tokens.Any(token =>
-            token.Kind == SyntaxKind.Keyword &&
-            string.Equals(token.Text, keyword, StringComparison.OrdinalIgnoreCase));
 
     private static string? FirstKeyword(TokenLine? line)
     {
@@ -378,6 +538,12 @@ internal static class BlankLineNormalizer
         public ControlFlowBlock ElseContext { get; init; }
 
         public bool IsCaseLabel { get; init; }
+
+        public bool EndsMultilineCall { get; init; }
+
+        public string? CompletedHeader { get; init; }
+
+        public bool HasMultilineHeader { get; init; }
     }
 
     private enum ControlFlowBlock

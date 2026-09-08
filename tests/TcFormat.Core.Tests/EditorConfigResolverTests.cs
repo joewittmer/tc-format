@@ -7,6 +7,71 @@ namespace TcFormat.Core.Tests;
 public sealed class EditorConfigResolverTests
 {
     [Fact]
+    public void ResolvesMultilinePolicyForControlHeaders()
+    {
+        using var directory = new TemporaryDirectory();
+        directory.Write(".editorconfig", """
+            root = true
+
+            [*.st]
+            tc_format_blank_line_after_if_then = multiline
+            tc_format_blank_line_after_elsif_then = MULTILINE
+            tc_format_blank_line_after_do = multiline
+            """);
+
+        var result = new EditorConfigResolver().Resolve(directory.Write("Example.st", string.Empty));
+
+        Assert.True(result.IsValid);
+        Assert.Equal(BlankLinePolicy.Multiline, result.Options.BlankLines.AfterIfThen);
+        Assert.Equal(BlankLinePolicy.Multiline, result.Options.BlankLines.AfterElsifThen);
+        Assert.Equal(BlankLinePolicy.Multiline, result.Options.BlankLines.AfterDo);
+    }
+
+    [Theory]
+    [InlineData("tc_format_blank_line_before_if")]
+    [InlineData("tc_format_blank_line_after_multiline_call")]
+    public void RejectsMultilinePolicyOutsideControlHeaders(string key)
+    {
+        using var directory = new TemporaryDirectory();
+        directory.Write(".editorconfig", $"root = true\n[*.st]\n{key} = multiline");
+
+        var result = new EditorConfigResolver().Resolve(directory.Write("Example.st", string.Empty));
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.PropertyName == key);
+    }
+
+    [Theory]
+    [InlineData("true", BlankLinePolicy.Require)]
+    [InlineData("false", BlankLinePolicy.Remove)]
+    [InlineData("preserve", BlankLinePolicy.Preserve)]
+    public void ResolvesLoopAndClosingBlockBlankLinePolicies(string value, BlankLinePolicy expected)
+    {
+        using var directory = new TemporaryDirectory();
+        directory.Write(".editorconfig", $"""
+            root = true
+
+            [*.st]
+            tc_format_blank_line_before_loop = {value}
+            tc_format_blank_line_after_repeat = {value}
+            tc_format_blank_line_before_until = {value}
+            tc_format_blank_line_before_end_loop = {value}
+            tc_format_blank_line_after_control_flow_block = {value}
+            tc_format_blank_line_after_multiline_call = {value}
+            """);
+
+        var result = new EditorConfigResolver().Resolve(directory.Write("Example.st", string.Empty));
+
+        Assert.True(result.IsValid);
+        Assert.Equal(expected, result.Options.BlankLines.BeforeLoop);
+        Assert.Equal(expected, result.Options.BlankLines.AfterRepeat);
+        Assert.Equal(expected, result.Options.BlankLines.BeforeUntil);
+        Assert.Equal(expected, result.Options.BlankLines.BeforeEndLoop);
+        Assert.Equal(expected, result.Options.BlankLines.AfterControlFlowBlock);
+        Assert.Equal(expected, result.Options.BlankLines.AfterMultilineCall);
+    }
+
+    [Fact]
     public void NestedConfigurationOverridesAndInheritsRepositoryValues()
     {
         using var directory = new TemporaryDirectory();
@@ -224,6 +289,30 @@ public sealed class EditorConfigResolverTests
 
         Assert.True(result.IsValid);
         Assert.Equal(WrapStyle.Hanging, result.Options.Wrapping.Calls);
+    }
+
+    [Fact]
+    public void HangingInitializerWrappingCanBeConfiguredIndependently()
+    {
+        using var directory = new TemporaryDirectory();
+        directory.Write(
+            ".editorconfig",
+            """
+            root = true
+
+            [*.TcPOU]
+            tc_format_wrap_calls = preserve
+            tc_format_wrap_initializers = hanging
+            tc_format_wrap_binary_expressions = always
+            """);
+        var sourcePath = directory.Write("Program.TcPOU", string.Empty);
+
+        var result = new EditorConfigResolver().Resolve(sourcePath);
+
+        Assert.True(result.IsValid);
+        Assert.Equal(WrapStyle.Preserve, result.Options.Wrapping.Calls);
+        Assert.Equal(WrapStyle.Hanging, result.Options.Wrapping.Initializers);
+        Assert.Equal(WrapStyle.Always, result.Options.Wrapping.BinaryExpressions);
     }
 
     [Fact]

@@ -1,5 +1,7 @@
 # Command-line usage
 
+[Back to README](../README.md)
+
 The `tc_format` command can format one or more files or directories in a single
 operation. Install it first by following the [installation guide](installation.md),
 then open a new terminal so the updated `PATH` is available.

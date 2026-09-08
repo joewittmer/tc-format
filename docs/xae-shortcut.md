@@ -1,5 +1,7 @@
 # TwinCAT XAE integration
 
+[Back to README](../README.md)
+
 The Windows installer can install the `tc_format` XAE extension alongside the
 CLI. Close TwinCAT XAE before installing, upgrading, or uninstalling. On the
 installer's **Select Components** page, leave **TwinCAT XAE editor integration**

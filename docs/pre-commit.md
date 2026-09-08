@@ -1,5 +1,7 @@
 # Git pre-commit integration
 
+[Back to README](../README.md)
+
 Install `tc_format` and confirm it is available on `PATH` before configuring the
 hook. Add this check-only hook to `.pre-commit-config.yaml`:
 
@@ -35,4 +37,3 @@ change, and `2` for invalid configuration, invalid source, or I/O errors.
 `language: unsupported` is the current pre-commit name for a command supplied by
 the local system. Older pre-commit installations may call this language
 `system`.
-

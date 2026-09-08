@@ -66,7 +66,8 @@ Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\THIRD-PARTY-NOTICES.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\assets\tc_format.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\examples\.editorconfig"; DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\less-whitespace.editorconfig"; DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\more-whitespace.editorconfig"; DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "{#MyVsixPath}"; DestDir: "{app}\integration"; DestName: "TcFormat.Xae.vsix"; Components: xae; Flags: ignoreversion
 Source: "{#MyVsixContentDir}\*"; DestDir: "{code:GetXaeExtensionDirectory}"; Components: xae; Flags: ignoreversion recursesubdirs createallsubdirs
 

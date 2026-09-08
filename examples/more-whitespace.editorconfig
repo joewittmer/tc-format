@@ -1,3 +1,8 @@
+# More whitespace: separate multiline headers and calls; keep ELSE tight.
+# Copy this file to your project root as .editorconfig.
+# Every option includes its description, accepted values, and built-in default.
+# Assigned values select this profile and can differ from the built-in defaults.
+
 # Stop EditorConfig discovery at this file. This is repository metadata rather
 # than a formatter setting. Omit it from a nested .editorconfig.
 root = true
@@ -101,17 +106,17 @@ tc_format_blank_line_before_var = true
 # Blank line before IF.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_before_if = false
+tc_format_blank_line_before_if = true
 
 # Blank line before CASE.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_before_case = false
+tc_format_blank_line_before_case = true
 
 # Blank line before ELSE in an IF statement.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_before_if_else = false
+tc_format_blank_line_before_if_else = true
 
 # Blank line before ELSE in a CASE statement.
 # Options: true, false, preserve
@@ -121,12 +126,12 @@ tc_format_blank_line_before_case_else = true
 # Blank line before ELSIF.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_before_elsif = false
+tc_format_blank_line_before_elsif = true
 
 # Blank line before a CASE-arm label.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_before_case_label = false
+tc_format_blank_line_before_case_label = true
 
 # Blank line before END_VAR.
 # Options: true, false, preserve
@@ -136,32 +141,69 @@ tc_format_blank_line_before_end_var = false
 # Blank line before END_IF.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_before_end_if = false
+tc_format_blank_line_before_end_if = true
 
 # Blank line before END_CASE.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_before_end_case = false
+tc_format_blank_line_before_end_case = true
 
-# Blank line after the THEN on an IF line.
-# Options: true, false, preserve
+# Blank line after an IF header's THEN, including when THEN is on a later line.
+# Options: true, false, preserve, multiline
 # Default: false
-tc_format_blank_line_after_if_then = false
+# multiline requires a blank line only for a header spanning multiple formatted
+# lines and removes it for a single-line header.
+tc_format_blank_line_after_if_then = multiline
 
-# Blank line after the THEN on an ELSIF line.
-# Options: true, false, preserve
+# Blank line after an ELSIF header's THEN.
+# Options: true, false, preserve, multiline
 # Default: false
-tc_format_blank_line_after_elsif_then = false
+tc_format_blank_line_after_elsif_then = multiline
 
-# Blank line after DO on a FOR or WHILE line.
-# Options: true, false, preserve
+# Blank line after a FOR or WHILE header's DO.
+# Options: true, false, preserve, multiline
 # Default: false
-tc_format_blank_line_after_do = false
+tc_format_blank_line_after_do = multiline
 
 # Blank line after a CASE-arm label whose colon ends the line.
 # Options: true, false, preserve
 # Default: false
-tc_format_blank_line_after_case_label = false
+tc_format_blank_line_after_case_label = true
+
+# Blank line before FOR, WHILE, and REPEAT.
+# Options: true, false, preserve
+# Default: preserve
+tc_format_blank_line_before_loop = true
+
+# Blank line after REPEAT.
+# Options: true, false, preserve
+# Default: preserve
+tc_format_blank_line_after_repeat = true
+
+# Blank line before UNTIL.
+# Options: true, false, preserve
+# Default: preserve
+tc_format_blank_line_before_until = true
+
+# Blank line before END_FOR, END_WHILE, and END_REPEAT.
+# Options: true, false, preserve
+# Default: preserve
+tc_format_blank_line_before_end_loop = true
+
+# Blank line after END_IF, END_CASE, END_FOR, END_WHILE, and END_REPEAT.
+# Options: true, false, preserve
+# Default: preserve
+# If a boundary also has a before-keyword policy, false takes precedence.
+# ELSE always keeps its following content directly beneath it.
+tc_format_blank_line_after_control_flow_block = true
+
+# Blank line after a standalone call that spans multiple formatted lines.
+# Options: true, false, preserve
+# Default: preserve
+# Includes calls expanded by wrapping. Calls within declarations, assignments,
+# and other expressions do not create a boundary. Closing-keyword policies
+# still take precedence when false, and the maximum blank-line count applies.
+tc_format_blank_line_after_multiline_call = true
 
 # Vertical alignment
 # Alignment applies to short, compatible groups and is skipped for the entire
@@ -218,10 +260,12 @@ tc_format_wrap_calls = hanging
 # Array and structure initializer wrapping.
 # Options:
 #   when_long - Wrap when max_line_length is exceeded.
+#   hanging - Keep the first item beside the opening delimiter and align later
+#             items beneath it when the initializer is long or multiline.
 #   always - Put every item on a continuation line.
 #   preserve - Introduce no new breaks, but normalize existing lines.
 # Default: when_long
-tc_format_wrap_initializers = preserve
+tc_format_wrap_initializers = always
 
 # Binary-expression wrapping.
 # Options:

@@ -13,6 +13,53 @@ public sealed class FormatterOptionsTests
     }
 
     [Fact]
+    public void MultilinePolicyIsValidOnlyForControlHeaders()
+    {
+        var valid = FormatterOptions.Default with
+        {
+            BlankLines = FormatterOptions.Default.BlankLines with
+            {
+                AfterIfThen = BlankLinePolicy.Multiline,
+                AfterElsifThen = BlankLinePolicy.Multiline,
+                AfterDo = BlankLinePolicy.Multiline
+            }
+        };
+        Assert.Empty(valid.Validate());
+
+        var invalid = valid with
+        {
+            BlankLines = valid.BlankLines with { BeforeIf = BlankLinePolicy.Multiline }
+        };
+        Assert.Single(invalid.Validate());
+    }
+
+    [Fact]
+    public void NewBlankLinePoliciesPreserveExistingDefaultsAndRejectInvalidValues()
+    {
+        var defaults = FormatterOptions.Default.BlankLines;
+        Assert.Equal(BlankLinePolicy.Preserve, defaults.BeforeLoop);
+        Assert.Equal(BlankLinePolicy.Preserve, defaults.AfterRepeat);
+        Assert.Equal(BlankLinePolicy.Preserve, defaults.BeforeUntil);
+        Assert.Equal(BlankLinePolicy.Preserve, defaults.BeforeEndLoop);
+        Assert.Equal(BlankLinePolicy.Preserve, defaults.AfterControlFlowBlock);
+        Assert.Equal(BlankLinePolicy.Preserve, defaults.AfterMultilineCall);
+        var invalid = FormatterOptions.Default with
+        {
+            BlankLines = defaults with
+            {
+                BeforeLoop = (BlankLinePolicy)999,
+                AfterRepeat = (BlankLinePolicy)999,
+                BeforeUntil = (BlankLinePolicy)999,
+                BeforeEndLoop = (BlankLinePolicy)999,
+                AfterControlFlowBlock = (BlankLinePolicy)999,
+                AfterMultilineCall = (BlankLinePolicy)999
+            }
+        };
+
+        Assert.Equal(6, invalid.Validate().Count);
+    }
+
+    [Fact]
     public void InvalidNumericAndEnumValuesAreReported()
     {
         var options = FormatterOptions.Default with
@@ -34,10 +81,12 @@ public sealed class FormatterOptionsTests
         Assert.Contains(errors, error => error.Contains(nameof(BlankLineOptions.BeforeCaseLabel), StringComparison.Ordinal));
     }
 
-    [Fact]
-    public void CompleteExampleExplicitlySetsEverySupportedOption()
+    [Theory]
+    [InlineData("less-whitespace.editorconfig")]
+    [InlineData("more-whitespace.editorconfig")]
+    public void WhitespaceProfileExplicitlySetsEverySupportedOption(string profile)
     {
-        var editorConfigPath = Path.Combine(AppContext.BaseDirectory, "CompleteExample.editorconfig");
+        var editorConfigPath = Path.Combine(AppContext.BaseDirectory, profile);
         var configuredValues = ReadStructuredTextSection(editorConfigPath);
 
         Assert.Equal(EditorConfigOptionCatalog.BuiltInValues.Count, configuredValues.Count);
@@ -45,39 +94,55 @@ public sealed class FormatterOptionsTests
         Assert.Empty(configuredValues.Keys.Except(EditorConfigOptionCatalog.BuiltInValues.Keys, StringComparer.OrdinalIgnoreCase));
     }
 
-    [Fact]
-    public void CompleteExampleUsesOpinionatedProfile()
+    [Theory]
+    [InlineData("less-whitespace.editorconfig")]
+    [InlineData("more-whitespace.editorconfig")]
+    public void WhitespaceProfileKeepsSharedFormattingChoices(string profile)
     {
-        var editorConfigPath = Path.Combine(AppContext.BaseDirectory, "CompleteExample.editorconfig");
+        var editorConfigPath = Path.Combine(AppContext.BaseDirectory, profile);
         var configuredValues = ReadStructuredTextSection(editorConfigPath);
 
         Assert.Equal("space", configuredValues["indent_style"]);
         Assert.Equal("off", configuredValues["max_line_length"]);
         Assert.Equal("true", configuredValues["tc_format_align_end_of_line_comments"]);
         Assert.Equal("hanging", configuredValues["tc_format_wrap_calls"]);
-        Assert.Equal("preserve", configuredValues["tc_format_wrap_initializers"]);
+        Assert.Equal("always", configuredValues["tc_format_wrap_initializers"]);
         Assert.Equal("preserve", configuredValues["tc_format_wrap_binary_expressions"]);
         Assert.Equal("after", configuredValues["tc_format_binary_operator_position"]);
     }
 
-    [Fact]
-    public void ConfigurationGuideProfileMatchesCompleteExample()
+    [Theory]
+    [InlineData("less-whitespace.editorconfig")]
+    [InlineData("more-whitespace.editorconfig")]
+    public void WhitespaceProfileAnnotatesEveryOptionWithAcceptedValuesAndBuiltInDefault(string profile)
     {
-        const string openingMarker = "<!-- canonical-profile:start -->\n```ini\n";
-        const string closingMarker = "\n```\n<!-- canonical-profile:end -->";
-        var editorConfigPath = Path.Combine(AppContext.BaseDirectory, "CompleteExample.editorconfig");
-        var configurationGuidePath = Path.Combine(AppContext.BaseDirectory, "ConfigurationGuide.md");
-        var editorConfig = NormalizeLineEndings(File.ReadAllText(editorConfigPath)).TrimEnd('\n');
-        var configurationGuide = NormalizeLineEndings(File.ReadAllText(configurationGuidePath));
-        var profileStart = configurationGuide.IndexOf(openingMarker, StringComparison.Ordinal);
+        var annotations = new List<string>();
+        var checkedOptions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var rawLine in File.ReadLines(Path.Combine(AppContext.BaseDirectory, profile)))
+        {
+            var line = rawLine.Trim();
+            if (line.StartsWith('#'))
+            {
+                annotations.Add(line);
+                continue;
+            }
 
-        Assert.True(profileStart >= 0, "The canonical profile opening marker is missing.");
-        profileStart += openingMarker.Length;
+            var separator = line.IndexOf('=');
+            if (separator > 0)
+            {
+                var key = line[..separator].Trim();
+                if (EditorConfigOptionCatalog.BuiltInValues.TryGetValue(key, out var defaultValue))
+                {
+                    Assert.Contains(annotations, annotation => annotation.StartsWith("# Options:", StringComparison.Ordinal));
+                    Assert.Contains("# Default: " + defaultValue, annotations);
+                    Assert.True(checkedOptions.Add(key), $"Duplicate option: {key}");
+                }
+            }
 
-        var profileEnd = configurationGuide.IndexOf(closingMarker, profileStart, StringComparison.Ordinal);
+            annotations.Clear();
+        }
 
-        Assert.True(profileEnd >= profileStart, "The canonical profile closing marker is missing.");
-        Assert.Equal(editorConfig, configurationGuide[profileStart..profileEnd]);
+        Assert.Equal(EditorConfigOptionCatalog.BuiltInValues.Count, checkedOptions.Count);
     }
 
     private static IReadOnlyDictionary<string, string> ReadStructuredTextSection(string path)
@@ -108,7 +173,4 @@ public sealed class FormatterOptionsTests
 
         return values;
     }
-
-    private static string NormalizeLineEndings(string value) =>
-        value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
 }

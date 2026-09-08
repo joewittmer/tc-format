@@ -1,5 +1,7 @@
 # Installation
 
+[Back to README](../README.md)
+
 ## Windows installer
 
 Download `tc_format-VERSION-win-x64-setup.exe` from the GitHub release, close

@@ -1,5 +1,7 @@
 # GitHub builds and releases
 
+[Back to README](../README.md)
+
 The checked-in GitHub Actions workflows become active when this repository is
 pushed to GitHub.
 

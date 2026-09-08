@@ -5,6 +5,22 @@ namespace TcFormat.Formatting;
 
 internal static class LineWrapper
 {
+    public static IReadOnlyList<SyntaxToken> AlignHangingContinuations(
+        IReadOnlyList<SyntaxToken> tokens,
+        FormatterOptions options) =>
+        Apply(tokens, options with
+        {
+            // Alignment can shift opening delimiters. Follow their final columns
+            // without introducing new width-triggered or always-style wrapping.
+            Layout = options.Layout with { MaximumLineLength = 0 },
+            Wrapping = options.Wrapping with
+            {
+                Calls = options.Wrapping.Calls == WrapStyle.Hanging ? WrapStyle.Hanging : WrapStyle.Preserve,
+                Initializers = options.Wrapping.Initializers == WrapStyle.Hanging ? WrapStyle.Hanging : WrapStyle.Preserve,
+                BinaryExpressions = WrapStyle.Preserve
+            }
+        });
+
     public static IReadOnlyList<SyntaxToken> Apply(
         IReadOnlyList<SyntaxToken> tokens,
         FormatterOptions options)
@@ -365,7 +381,7 @@ internal static class LineWrapper
         var structuralIndentation = scopes.Count > 0
             ? scopes[0].BaseIndentation
             : line.LeadingWhitespace;
-        var useHangingIndentation = kind == DelimiterKind.Call &&
+        var useHangingIndentation = kind is DelimiterKind.Call or DelimiterKind.Initializer &&
                                     style == WrapStyle.Hanging &&
                                     HasMultipleItems(tokens, openingIndex) &&
                                     HasFirstItemOnOpeningLine(tokens, openingIndex) &&
@@ -647,7 +663,10 @@ internal static class LineWrapper
         int openingIndex,
         int tabWidth)
     {
-        var targetColumn = GetEndColumn(tokens, line, openingIndex, tabWidth);
+        var targetIndex = TryFindNextCodeOnLine(tokens, openingIndex + 1, out var firstItemIndex)
+            ? firstItemIndex - 1
+            : openingIndex;
+        var targetColumn = GetEndColumn(tokens, line, targetIndex, tabWidth);
         var leadingWidth = AddWidth(0, line.LeadingWhitespace, tabWidth);
         return line.LeadingWhitespace + new string(' ', Math.Max(0, targetColumn - leadingWidth));
     }

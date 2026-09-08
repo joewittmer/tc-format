@@ -38,7 +38,8 @@ public enum BlankLinePolicy
 {
     Remove,
     Require,
-    Preserve
+    Preserve,
+    Multiline
 }
 
 public sealed record FileOptions(
@@ -72,7 +73,13 @@ public sealed record BlankLineOptions(
     BlankLinePolicy AfterIfThen,
     BlankLinePolicy AfterElsifThen,
     BlankLinePolicy AfterDo,
-    BlankLinePolicy AfterCaseLabel);
+    BlankLinePolicy AfterCaseLabel,
+    BlankLinePolicy BeforeLoop = BlankLinePolicy.Preserve,
+    BlankLinePolicy AfterRepeat = BlankLinePolicy.Preserve,
+    BlankLinePolicy BeforeUntil = BlankLinePolicy.Preserve,
+    BlankLinePolicy BeforeEndLoop = BlankLinePolicy.Preserve,
+    BlankLinePolicy AfterControlFlowBlock = BlankLinePolicy.Preserve,
+    BlankLinePolicy AfterMultilineCall = BlankLinePolicy.Preserve);
 
 public sealed record AlignmentOptions(
     bool Declarations,
@@ -180,20 +187,26 @@ public sealed record FormatterOptions(
         ValidateEnum(Wrapping.Initializers, nameof(Wrapping.Initializers), errors);
         ValidateEnum(Wrapping.BinaryExpressions, nameof(Wrapping.BinaryExpressions), errors);
         ValidateEnum(Wrapping.BinaryOperatorPosition, nameof(Wrapping.BinaryOperatorPosition), errors);
-        ValidateEnum(BlankLines.BeforeVariableBlock, nameof(BlankLines.BeforeVariableBlock), errors);
-        ValidateEnum(BlankLines.BeforeIf, nameof(BlankLines.BeforeIf), errors);
-        ValidateEnum(BlankLines.BeforeCase, nameof(BlankLines.BeforeCase), errors);
-        ValidateEnum(BlankLines.BeforeIfElse, nameof(BlankLines.BeforeIfElse), errors);
-        ValidateEnum(BlankLines.BeforeCaseElse, nameof(BlankLines.BeforeCaseElse), errors);
-        ValidateEnum(BlankLines.BeforeElsif, nameof(BlankLines.BeforeElsif), errors);
-        ValidateEnum(BlankLines.BeforeCaseLabel, nameof(BlankLines.BeforeCaseLabel), errors);
-        ValidateEnum(BlankLines.BeforeEndVar, nameof(BlankLines.BeforeEndVar), errors);
-        ValidateEnum(BlankLines.BeforeEndIf, nameof(BlankLines.BeforeEndIf), errors);
-        ValidateEnum(BlankLines.BeforeEndCase, nameof(BlankLines.BeforeEndCase), errors);
-        ValidateEnum(BlankLines.AfterIfThen, nameof(BlankLines.AfterIfThen), errors);
-        ValidateEnum(BlankLines.AfterElsifThen, nameof(BlankLines.AfterElsifThen), errors);
-        ValidateEnum(BlankLines.AfterDo, nameof(BlankLines.AfterDo), errors);
-        ValidateEnum(BlankLines.AfterCaseLabel, nameof(BlankLines.AfterCaseLabel), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeVariableBlock, nameof(BlankLines.BeforeVariableBlock), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeIf, nameof(BlankLines.BeforeIf), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeCase, nameof(BlankLines.BeforeCase), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeIfElse, nameof(BlankLines.BeforeIfElse), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeCaseElse, nameof(BlankLines.BeforeCaseElse), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeElsif, nameof(BlankLines.BeforeElsif), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeCaseLabel, nameof(BlankLines.BeforeCaseLabel), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeEndVar, nameof(BlankLines.BeforeEndVar), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeEndIf, nameof(BlankLines.BeforeEndIf), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeEndCase, nameof(BlankLines.BeforeEndCase), errors);
+        ValidateBlankLinePolicy(BlankLines.AfterIfThen, nameof(BlankLines.AfterIfThen), errors, allowMultiline: true);
+        ValidateBlankLinePolicy(BlankLines.AfterElsifThen, nameof(BlankLines.AfterElsifThen), errors, allowMultiline: true);
+        ValidateBlankLinePolicy(BlankLines.AfterDo, nameof(BlankLines.AfterDo), errors, allowMultiline: true);
+        ValidateBlankLinePolicy(BlankLines.AfterCaseLabel, nameof(BlankLines.AfterCaseLabel), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeLoop, nameof(BlankLines.BeforeLoop), errors);
+        ValidateBlankLinePolicy(BlankLines.AfterRepeat, nameof(BlankLines.AfterRepeat), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeUntil, nameof(BlankLines.BeforeUntil), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeEndLoop, nameof(BlankLines.BeforeEndLoop), errors);
+        ValidateBlankLinePolicy(BlankLines.AfterControlFlowBlock, nameof(BlankLines.AfterControlFlowBlock), errors);
+        ValidateBlankLinePolicy(BlankLines.AfterMultilineCall, nameof(BlankLines.AfterMultilineCall), errors);
 
         RequirePositive(Indentation.Size, nameof(Indentation.Size), errors);
         RequirePositive(Indentation.TabWidth, nameof(Indentation.TabWidth), errors);
@@ -203,6 +216,19 @@ public sealed record FormatterOptions(
         RequireNonNegative(Spacing.SpacesBeforeEndOfLineComment, nameof(Spacing.SpacesBeforeEndOfLineComment), errors);
 
         return errors;
+    }
+
+    private static void ValidateBlankLinePolicy(
+        BlankLinePolicy value,
+        string name,
+        ICollection<string> errors,
+        bool allowMultiline = false)
+    {
+        ValidateEnum(value, name, errors);
+        if (!allowMultiline && value == BlankLinePolicy.Multiline)
+        {
+            errors.Add($"{name} does not support multiline; use it only after IF/ELSIF THEN or DO.");
+        }
     }
 
     private static void ValidateEnum<T>(T value, string name, ICollection<string> errors)

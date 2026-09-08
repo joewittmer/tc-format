@@ -790,6 +790,65 @@ public sealed class StructuredTextFormatterTests
         Assert.Equal("fbRun(first := 1, second := 2);\r\n", result.FormattedText);
     }
 
+    [Theory]
+    [InlineData(WrapStyle.Preserve)]
+    [InlineData(WrapStyle.Always)]
+    public void AlignsNestedConcatArgumentsAfterDeclarationAlignment(WrapStyle initializerStyle)
+    {
+        const string source =
+            "VAR\n" +
+            "_longerDeclarationName : FB_Component_BasicSlaveAxis;\n" +
+            "_virtualMasterAxis : FB_Component_BasicSlaveAxis := (Name := CONCAT(_Name,\n" +
+            "' Virtual Master'));\n" +
+            "END_VAR";
+        var options = FormatterOptions.Default with
+        {
+            Layout = FormatterOptions.Default.Layout with { MaximumLineLength = 0 },
+            Wrapping = FormatterOptions.Default.Wrapping with { Initializers = initializerStyle },
+            Spacing = FormatterOptions.Default.Spacing with { InsideParentheses = true }
+        };
+
+        var first = StructuredTextFormatter.Format(source, options);
+        var lines = first.FormattedText.Split("\r\n");
+        var openingLine = Assert.Single(lines, line => line.Contains("CONCAT(", StringComparison.Ordinal));
+        var continuationLine = Assert.Single(lines, line => line.Contains("' Virtual Master'", StringComparison.Ordinal));
+
+        Assert.True(first.IsValid);
+        Assert.Equal(openingLine.IndexOf("_Name", StringComparison.Ordinal),
+            continuationLine.IndexOf("' Virtual Master'", StringComparison.Ordinal));
+        var second = StructuredTextFormatter.Format(first.FormattedText, options);
+        Assert.True(second.IsValid);
+        Assert.Equal(first.FormattedText, second.FormattedText);
+    }
+
+    [Theory]
+    [InlineData("longerTarget := '';\nvalue := CONCAT(_Name,\n' suffix');")]
+    [InlineData("Build(longArgument := '',\na := CONCAT(_Name,\n' suffix'));")]
+    [InlineData("longerTarget := [];\nvalue := [first,\nsecond];")]
+    public void HangingContinuationsFollowAlignedAssignmentsAndNamedInputs(string source)
+    {
+        var options = FormatterOptions.Default with
+        {
+            Layout = FormatterOptions.Default.Layout with { MaximumLineLength = 0 },
+            Wrapping = FormatterOptions.Default.Wrapping with { Initializers = WrapStyle.Hanging }
+        };
+
+        var first = StructuredTextFormatter.Format(source, options);
+        var lines = first.FormattedText.Split("\r\n");
+        var isArray = source.Contains("[first", StringComparison.Ordinal);
+        var firstItem = isArray ? "first" : "_Name";
+        var secondItem = isArray ? "second" : "' suffix'";
+        var openingLine = Assert.Single(lines, line => line.Contains(firstItem, StringComparison.Ordinal));
+        var continuationLine = Assert.Single(lines, line => line.Contains(secondItem, StringComparison.Ordinal));
+
+        Assert.True(first.IsValid);
+        Assert.Equal(openingLine.IndexOf(firstItem, StringComparison.Ordinal),
+            continuationLine.IndexOf(secondItem, StringComparison.Ordinal));
+        var second = StructuredTextFormatter.Format(first.FormattedText, options);
+        Assert.True(second.IsValid);
+        Assert.Equal(first.FormattedText, second.FormattedText);
+    }
+
     [Fact]
     public void HangingWrapsEveryArgumentAfterTheFirstWhenCallIsLong()
     {
@@ -833,6 +892,114 @@ public sealed class StructuredTextFormatterTests
             "    firstValue, secondValue,\r\n" +
             "    thirdValue];\r\n",
             result.FormattedText);
+    }
+
+    [Theory]
+    [InlineData(WrapStyle.Hanging)]
+    [InlineData(WrapStyle.Always)]
+    [InlineData(WrapStyle.WhenLong)]
+    [InlineData(WrapStyle.Preserve)]
+    public void FormatsAxisArrayUsingConfiguredInitializerStyle(WrapStyle style)
+    {
+        const string declaration = "    _axis : ARRAY[0.._MAX_NUMBER_OF_AXES - 1] OF FB_Component_BasicSlaveAxis := [";
+        var items = Enumerable.Range(1, 10).Select(index => $"(Name := 'Axis {index}')").ToArray();
+        var source = "VAR\n" + declaration + string.Join(",\n    ", items) + "];\nEND_VAR";
+        var options = FormatterOptions.Default with
+        {
+            Layout = FormatterOptions.Default.Layout with { MaximumLineLength = 0 },
+            Wrapping = FormatterOptions.Default.Wrapping with { Initializers = style }
+        };
+        var indentation = new string(' ', style == WrapStyle.Hanging ? declaration.Length : 8);
+        var opening = style is WrapStyle.Always or WrapStyle.WhenLong ? "\r\n" + indentation : string.Empty;
+        var closing = style == WrapStyle.Always ? "\r\n    ];" : "];";
+        var expected = "VAR\r\n" + declaration + opening + string.Join(",\r\n" + indentation, items) +
+                       closing + "\r\nEND_VAR\r\n";
+
+        var first = StructuredTextFormatter.Format(source, options);
+        var second = StructuredTextFormatter.Format(first.FormattedText, options);
+
+        Assert.True(first.IsValid);
+        Assert.Equal(expected, first.FormattedText);
+        Assert.True(second.IsValid);
+        Assert.Equal(first.FormattedText, second.FormattedText);
+    }
+
+    [Theory]
+    [InlineData("values := [one, two];", 110, "values := [one, two];\r\n")]
+    [InlineData("values := [one, two, three];", 20,
+        "values := [one,\r\n           two,\r\n           three];\r\n")]
+    [InlineData("value := (first := 1,\nother := 2);", 0,
+        "value := (first := 1,\r\n          other := 2);\r\n")]
+    [InlineData("values := [\none,\ntwo];", 0,
+        "values := [\r\n    one,\r\n    two];\r\n")]
+    [InlineData("result := (first + second);", 0, "result := (first + second);\r\n")]
+    [InlineData("values := [[one, two],\n[three, four]];", 0,
+        "values := [[one, two],\r\n           [three, four]];\r\n")]
+    public void HangingInitializerWrappingRespectsWidthAndDelimiterScope(
+        string source,
+        int maximumLineLength,
+        string expected)
+    {
+        var options = FormatterOptions.Default with
+        {
+            Layout = FormatterOptions.Default.Layout with { MaximumLineLength = maximumLineLength },
+            Wrapping = FormatterOptions.Default.Wrapping with
+            {
+                Calls = WrapStyle.Preserve,
+                Initializers = WrapStyle.Hanging,
+                BinaryExpressions = WrapStyle.Preserve
+            }
+        };
+
+        var first = StructuredTextFormatter.Format(source, options);
+        var second = StructuredTextFormatter.Format(first.FormattedText, options);
+
+        Assert.True(first.IsValid);
+        Assert.Equal(expected, first.FormattedText);
+        Assert.True(second.IsValid);
+        Assert.Equal(first.FormattedText, second.FormattedText);
+    }
+
+    [Fact]
+    public void HangingInitializerAlignmentMeasuresTabsAndDelimiterSpacing()
+    {
+        var options = FormatterOptions.Default with
+        {
+            Layout = FormatterOptions.Default.Layout with { MaximumLineLength = 0 },
+            Indentation = FormatterOptions.Default.Indentation with { Style = IndentStyle.Tabs },
+            Wrapping = FormatterOptions.Default.Wrapping with { Initializers = WrapStyle.Hanging },
+            Spacing = FormatterOptions.Default.Spacing with { InsideBrackets = true }
+        };
+
+        var first = StructuredTextFormatter.Format("VAR\nvalues : ARRAY[0..1] OF INT := [1,\n2];\nEND_VAR", options);
+        var expected = "VAR\r\n\tvalues : ARRAY[ 0..1 ] OF INT := [ 1,\r\n\t" +
+                       new string(' ', "values : ARRAY[ 0..1 ] OF INT := [ ".Length) + "2 ];\r\nEND_VAR\r\n";
+
+        Assert.True(first.IsValid);
+        Assert.Equal(expected, first.FormattedText);
+        var second = StructuredTextFormatter.Format(first.FormattedText, options);
+        Assert.True(second.IsValid);
+        Assert.Equal(first.FormattedText, second.FormattedText);
+    }
+
+    [Fact]
+    public void HangingInitializersPreserveCommentsAndStringContents()
+    {
+        var options = FormatterOptions.Default with
+        {
+            Layout = FormatterOptions.Default.Layout with { MaximumLineLength = 0 },
+            Wrapping = FormatterOptions.Default.Wrapping with { Initializers = WrapStyle.Hanging }
+        };
+        const string source = "values := ['a,b', // first\n'c', (* keep *) 'd',\n'e'];";
+
+        var first = StructuredTextFormatter.Format(source, options);
+        var second = StructuredTextFormatter.Format(first.FormattedText, options);
+
+        Assert.True(first.IsValid);
+        Assert.Contains("'a,b', // first", first.FormattedText, StringComparison.Ordinal);
+        Assert.Contains("(* keep *) 'd',", first.FormattedText, StringComparison.Ordinal);
+        Assert.True(second.IsValid);
+        Assert.Equal(first.FormattedText, second.FormattedText);
     }
 
     [Fact]

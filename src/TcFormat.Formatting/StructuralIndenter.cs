@@ -33,6 +33,8 @@ internal static class StructuralIndenter
     {
         private readonly List<Block> blocks = [];
         private int continuationDepth;
+        private string? headerTerminator;
+        private int headerIndentationDepth;
 
         public List<FormatDiagnostic> Diagnostics { get; } = [];
 
@@ -53,9 +55,10 @@ internal static class StructuralIndenter
                 token.Kind != SyntaxKind.NewLine &&
                 token.Text.AsSpan().IndexOfAny('\r', '\n') >= 0);
             var isCaseLabel = IsCaseLabel(significant);
-            var displayDepth = ComputeDisplayDepth(significant[0], isCaseLabel);
+            var continuesHeader = headerTerminator is not null;
+            var displayDepth = continuesHeader ? headerIndentationDepth : ComputeDisplayDepth(significant[0], isCaseLabel);
             var startsWithClosingDelimiter = significant[0].Text is ")" or "]";
-            var continuation = continuationDepth > 0 && !startsWithClosingDelimiter;
+            var continuation = (continuesHeader || continuationDepth > 0) && !startsWithClosingDelimiter;
 
             if (containsMultilineToken)
             {
@@ -71,6 +74,30 @@ internal static class StructuralIndenter
 
             UpdateBlocks(significant, isCaseLabel);
             UpdateContinuationDepth(significant);
+            UpdateHeader(significant, displayDepth);
+        }
+
+        private void UpdateHeader(IReadOnlyList<SyntaxToken> significant, int displayDepth)
+        {
+            var terminator = significant[0].Kind == SyntaxKind.Keyword
+                ? significant[0].Text.ToUpperInvariant() switch
+                {
+                    "IF" or "ELSIF" => "THEN",
+                    "FOR" or "WHILE" => "DO",
+                    "CASE" => "OF",
+                    _ => null
+                }
+                : null;
+            if (terminator is not null)
+            {
+                headerTerminator = terminator;
+                headerIndentationDepth = displayDepth;
+            }
+
+            if (headerTerminator is not null && significant.Any(token => IsKeyword(token, headerTerminator)))
+            {
+                headerTerminator = null;
+            }
         }
 
         public void Complete()
@@ -98,7 +125,7 @@ internal static class StructuralIndenter
                     ? 2
                     : 1;
             }
-            else if (IsBranch(first))
+            else if (IsBranch(first) || IsKeyword(first, "UNTIL"))
             {
                 depth--;
             }
@@ -184,6 +211,20 @@ internal static class StructuralIndenter
             for (var index = 0; index < significant.Count; index++)
             {
                 var token = significant[index];
+                if (IsKeyword(token, "UNTIL"))
+                {
+                    // UNTIL starts the condition; END_REPEAT closes the block.
+                    if (blocks.LastOrDefault()?.Kind != BlockKind.Repeat)
+                    {
+                        Diagnostics.Add(new FormatDiagnostic(
+                            "Unexpected UNTIL; expected an open REPEAT block.",
+                            token.Line,
+                            token.Column));
+                    }
+
+                    continue;
+                }
+
                 if (TryGetCloseKind(token, out var closeKind))
                 {
                     PopExpected(closeKind, token);
@@ -299,7 +340,7 @@ internal static class StructuralIndenter
                 "END_CASE" => BlockKind.Case,
                 "END_FOR" => BlockKind.For,
                 "END_WHILE" => BlockKind.While,
-                "UNTIL" or "END_REPEAT" => BlockKind.Repeat,
+                "END_REPEAT" => BlockKind.Repeat,
                 "END_STRUCT" => BlockKind.Struct,
                 "END_UNION" => BlockKind.Union,
                 "END_VAR" => BlockKind.Var,

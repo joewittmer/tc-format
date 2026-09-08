@@ -43,8 +43,11 @@ public static class StructuredTextFormatter
 
         var spaced = TokenSpacer.Apply(indented.Tokens, options);
         var wrapped = LineWrapper.Apply(spaced, options);
-        var aligned = VerticalAligner.Apply(wrapped, options);
-        var formattedText = Render(aligned, options);
+        // Wrapping can turn a call or control-flow header into a multiline construct.
+        var layoutSeparated = BlankLineNormalizer.Apply(wrapped, options);
+        var aligned = VerticalAligner.Apply(layoutSeparated, options);
+        var hangingAligned = LineWrapper.AlignHangingContinuations(aligned, options);
+        var formattedText = Render(hangingAligned, options);
         var formatted = StructuredTextLexer.Lex(formattedText);
         if (!formatted.IsValid)
         {

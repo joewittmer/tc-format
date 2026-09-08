@@ -14,22 +14,65 @@ and project configuration.
 - Formats plain Structured Text files and the code regions embedded in TwinCAT
   XML source files without rewriting the surrounding XML.
 - Normalizes indentation, keyword casing, line endings, whitespace, blank
-  lines, token spacing, and final newlines. Its structural blank-line defaults
-  follow the SPT v4 libraries for `IF` and `CASE`, while every boundary remains
-  individually configurable.
+  lines, token spacing, and final newlines.
 - Aligns declarations, direct addresses, initializers, assignments, and named
-  call arguments.
+  call arguments. Hanging layouts keep continuation arguments aligned beneath
+  the first argument, including nested calls such as `CONCAT`.
 - Wraps calls, array and structure initializers, and binary expressions using a
   configurable soft line-length limit.
+- Supports blank lines after multiline calls and conditional spacing after
+  multiline `IF`, `ELSIF`, `FOR`, and `WHILE` headers, including headers expanded
+  by automatic wrapping.
 - Resolves formatting rules from standard `.editorconfig` files, including
   inheritance and per-directory overrides.
 - Validates an entire CLI operation before writing and atomically replaces each
   changed file, avoiding partial results caused by invalid source or
   configuration.
 
-An opinionated [`examples/.editorconfig`](examples/.editorconfig) is provided as
-an easily modified starting point. See the guides below to install the tool,
-configure a project, and choose an integration workflow.
+## Choose a formatting profile
+
+Two complete, annotated profiles are included:
+
+| Profile | Layout |
+| --- | --- |
+| [Less whitespace](examples/less-whitespace.editorconfig) | Keeps control-flow boundaries compact and removes blank lines after multiline calls. |
+| [More whitespace](examples/more-whitespace.editorconfig) | Separates control-flow sections, multiline headers, and multiline calls with blank lines. Short headers stay close to their bodies, and no blank line follows `ELSE`. |
+
+Both use four-space indentation, hanging call alignment, and `always` initializer
+wrapping, which puts each array entry or structure field on a continuation line.
+They share the same horizontal spacing and alignment settings. Each option has
+comments explaining its purpose, accepted values, and built-in default; the
+selected profile values may differ from those defaults.
+
+Copy the chosen file to your Structured Text project root as `.editorconfig`,
+or merge its section into an existing `.editorconfig`. The example filenames
+are not discovered automatically. The installer and portable archive include
+both profiles in their `examples` directory.
+
+For example, the more-whitespace profile produces this layout:
+
+```iecst
+IF ready THEN
+    _axis.Enable();
+    _axis.MoveAbsolute(Position := targetPosition,
+                       Velocity := 20);
+
+    moving := TRUE;
+
+ELSIF waiting AND
+    connectionHealthy THEN
+
+    _axis.Reset();
+
+ELSE
+    _axis.Stop();
+
+END_IF
+```
+
+Use the profiles themselves as the complete option references. The
+[configuration guide](docs/configuration.md) explains profile differences,
+initializer layouts, inheritance, and how interacting settings are resolved.
 
 ## Documentation
 

@@ -191,17 +191,17 @@ public sealed class EditorConfigResolver
                     defaults.BlankLines.BeforeEndCase,
                     values,
                     diagnostics),
-                AfterIfThen: ReadBlankLinePolicy(
+                AfterIfThen: ReadHeaderBlankLinePolicy(
                     "tc_format_blank_line_after_if_then",
                     defaults.BlankLines.AfterIfThen,
                     values,
                     diagnostics),
-                AfterElsifThen: ReadBlankLinePolicy(
+                AfterElsifThen: ReadHeaderBlankLinePolicy(
                     "tc_format_blank_line_after_elsif_then",
                     defaults.BlankLines.AfterElsifThen,
                     values,
                     diagnostics),
-                AfterDo: ReadBlankLinePolicy(
+                AfterDo: ReadHeaderBlankLinePolicy(
                     "tc_format_blank_line_after_do",
                     defaults.BlankLines.AfterDo,
                     values,
@@ -209,6 +209,36 @@ public sealed class EditorConfigResolver
                 AfterCaseLabel: ReadBlankLinePolicy(
                     "tc_format_blank_line_after_case_label",
                     defaults.BlankLines.AfterCaseLabel,
+                    values,
+                    diagnostics),
+                BeforeLoop: ReadBlankLinePolicy(
+                    "tc_format_blank_line_before_loop",
+                    defaults.BlankLines.BeforeLoop,
+                    values,
+                    diagnostics),
+                AfterRepeat: ReadBlankLinePolicy(
+                    "tc_format_blank_line_after_repeat",
+                    defaults.BlankLines.AfterRepeat,
+                    values,
+                    diagnostics),
+                BeforeUntil: ReadBlankLinePolicy(
+                    "tc_format_blank_line_before_until",
+                    defaults.BlankLines.BeforeUntil,
+                    values,
+                    diagnostics),
+                BeforeEndLoop: ReadBlankLinePolicy(
+                    "tc_format_blank_line_before_end_loop",
+                    defaults.BlankLines.BeforeEndLoop,
+                    values,
+                    diagnostics),
+                AfterControlFlowBlock: ReadBlankLinePolicy(
+                    "tc_format_blank_line_after_control_flow_block",
+                    defaults.BlankLines.AfterControlFlowBlock,
+                    values,
+                    diagnostics),
+                AfterMultilineCall: ReadBlankLinePolicy(
+                    "tc_format_blank_line_after_multiline_call",
+                    defaults.BlankLines.AfterMultilineCall,
                     values,
                     diagnostics)),
             Alignment: new AlignmentOptions(
@@ -248,12 +278,12 @@ public sealed class EditorConfigResolver
                     values,
                     diagnostics)),
             Wrapping: new WrappingOptions(
-                Calls: ReadCallWrapStyle(
+                Calls: ReadDelimitedWrapStyle(
                     "tc_format_wrap_calls",
                     defaults.Wrapping.Calls,
                     values,
                     diagnostics),
-                Initializers: ReadWrapStyle(
+                Initializers: ReadDelimitedWrapStyle(
                     "tc_format_wrap_initializers",
                     defaults.Wrapping.Initializers,
                     values,
@@ -342,7 +372,7 @@ public sealed class EditorConfigResolver
             ("always", WrapStyle.Always),
             ("preserve", WrapStyle.Preserve));
 
-    private static WrapStyle ReadCallWrapStyle(
+    private static WrapStyle ReadDelimitedWrapStyle(
         string key,
         WrapStyle fallback,
         IReadOnlyDictionary<string, MutableResolvedValue> values,
@@ -386,6 +416,21 @@ public sealed class EditorConfigResolver
             ("true", BlankLinePolicy.Require),
             ("false", BlankLinePolicy.Remove),
             ("preserve", BlankLinePolicy.Preserve));
+
+    private static BlankLinePolicy ReadHeaderBlankLinePolicy(
+        string key,
+        BlankLinePolicy fallback,
+        IReadOnlyDictionary<string, MutableResolvedValue> values,
+        ICollection<ConfigurationDiagnostic> diagnostics) =>
+        ReadEnum(
+            key,
+            fallback,
+            values,
+            diagnostics,
+            ("true", BlankLinePolicy.Require),
+            ("false", BlankLinePolicy.Remove),
+            ("preserve", BlankLinePolicy.Preserve),
+            ("multiline", BlankLinePolicy.Multiline));
 
     private static int ReadIndentSize(
         string key,

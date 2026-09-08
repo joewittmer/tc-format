@@ -1,342 +1,175 @@
 # EditorConfig configuration
 
+[Back to README](../README.md)
+
 `tc_format` uses `.editorconfig` as its only project configuration format. It
 recognizes a focused set of standard EditorConfig properties plus formatter
 properties prefixed with `tc_format_`.
 
-## Opinionated configuration
+## Less whitespace or more whitespace
 
-The annotated profile below is both a starting point and the complete option
-reference. Every setting understood by the formatter is included. The comments
-immediately above each setting describe its options and default; the assigned
-value is our opinionated choice.
+Choose a complete profile and copy it to your Structured Text project root as
+`.editorconfig`:
 
-The canonical source is
-[`examples/.editorconfig`](../examples/.editorconfig). Its complete contents
-are mirrored below so they can be copied directly from this guide. Copy the
-profile to the root of a Structured Text repository as `.editorconfig`, or
-merge its section into an existing file. Property names and named values are
-case-insensitive.
+- [Less whitespace](../examples/less-whitespace.editorconfig) keeps control-flow
+  boundaries tight, removing blank lines at those boundaries.
+- [More whitespace](../examples/more-whitespace.editorconfig) inserts one blank
+  line before control-flow headers, around case labels and closing control-flow
+  keywords, and after multiline calls. Short `IF`, `ELSIF`, `FOR`, and `WHILE`
+  headers stay close to their bodies; multiline headers get one blank line after
+  `THEN` or `DO`. `REPEAT` retains its following blank line. There is **no blank
+  line after `ELSE`**, even when its first statement is another `IF` or a loop.
 
-<!-- canonical-profile:start -->
-```ini
-# Stop EditorConfig discovery at this file. This is repository metadata rather
-# than a formatter setting. Omit it from a nested .editorconfig.
-root = true
+Use the annotations in your chosen profile to adjust its settings to your
+preferences. Each setting includes an explanation, accepted values, and the
+built-in default, so you can customize the profile directly in `.editorconfig`.
 
-# Apply these settings to every file type supported by tc_format.
-[*.{st,iecst,TcPOU,TcDUT,TcGVL,TcITF,TcPRG}]
+Both profiles use four-space indentation, the same horizontal spacing and
+alignment options, `always` initializer wrapping, and `hanging` call wrapping.
+They retain up to one manually inserted blank line between ordinary statements.
+The more-whitespace profile keeps variable declarations compact. These files
+take effect only when copied or merged into a discovered `.editorconfig` file;
+their example filenames are not selected automatically by the formatter.
 
-# File and indentation
+Less whitespace:
 
-# Indentation characters.
-# Options:
-#   space - Indent with spaces.
-#   tab - Indent with tabs.
-# Default: space
-indent_style = space
-
-# Spaces per indentation level.
-# Options:
-#   positive_integer - Use that many spaces.
-#   tab - Use the effective tab_width.
-# Default: 4
-indent_size = 4
-
-# Visual width of a tab, used to measure line length and alignment.
-# Options: positive_integer
-# Default: 4
-tab_width = 4
-
-# Line-ending style.
-# Options:
-#   crlf - Windows line endings.
-#   lf - Unix line endings.
-#   cr - Carriage-return-only line endings.
-# Default: crlf
-end_of_line = crlf
-
-# End the formatted code region with one newline.
-# Options: true, false
-# Default: true
-insert_final_newline = true
-
-# Remove spaces and tabs immediately before line endings.
-# Options: true, false
-# Default: true
-trim_trailing_whitespace = true
-
-# Soft visual-width limit used by wrapping and alignment.
-# Options:
-#   positive_integer - Use that visual-width limit.
-#   off - Disable width-triggered wrapping and the alignment width guard.
-# Default: 110
-max_line_length = off
-
-# General behavior
-
-# Case of recognized Structured Text keywords.
-# Options:
-#   upper - Convert recognized keywords to uppercase.
-#   lower - Convert recognized keywords to lowercase.
-#   preserve - Keep each keyword's existing spelling.
-# Default: upper
-# Identifiers, comments, and string literals are never case-converted.
-tc_format_keyword_case = upper
-
-# Extra indentation for ordinary continuation lines.
-# Options: positive_integer
-# Default: 4
-# With tabs, a value equal to tab_width produces one tab.
-tc_format_continuation_indent_size = 4
-
-# Indent CASE labels one level beneath CASE and their statements one level
-# further.
-# Options: true, false
-# Default: true
-tc_format_indent_case_labels = true
-
-# Statement and block layout
-
-# Split adjacent top-level statements after semicolons.
-# Options: true, false
-# Default: true
-tc_format_one_statement_per_line = true
-
-# Maximum empty lines allowed between content lines.
-# Options: non_negative_integer
-# Default: 1
-# 0 also removes separators inserted by the structural layout.
-tc_format_max_consecutive_blank_lines = 1
-
-# Blank-line boundary values:
-#   true - Require exactly one empty line.
-#   false - Remove existing empty lines.
-#   preserve - Do not add or remove an empty line at this boundary.
-# The global maximum above still applies when a boundary is preserved.
-
-# Blank line before VAR and VAR_* blocks. The METHOD/VAR boundary stays tight.
-# Options: true, false, preserve
-# Default: true
-tc_format_blank_line_before_var = true
-
-# Blank line before IF.
-# Options: true, false, preserve
-# Default: false
-tc_format_blank_line_before_if = false
-
-# Blank line before CASE.
-# Options: true, false, preserve
-# Default: false
-tc_format_blank_line_before_case = false
-
-# Blank line before ELSE in an IF statement.
-# Options: true, false, preserve
-# Default: false
-tc_format_blank_line_before_if_else = false
-
-# Blank line before ELSE in a CASE statement.
-# Options: true, false, preserve
-# Default: true
-tc_format_blank_line_before_case_else = true
-
-# Blank line before ELSIF.
-# Options: true, false, preserve
-# Default: false
-tc_format_blank_line_before_elsif = false
-
-# Blank line before a CASE-arm label.
-# Options: true, false, preserve
-# Default: false
-tc_format_blank_line_before_case_label = false
-
-# Blank line before END_VAR.
-# Options: true, false, preserve
-# Default: false
-tc_format_blank_line_before_end_var = false
-
-# Blank line before END_IF.
-# Options: true, false, preserve
-# Default: false
-tc_format_blank_line_before_end_if = false
-
-# Blank line before END_CASE.
-# Options: true, false, preserve
-# Default: false
-tc_format_blank_line_before_end_case = false
-
-# Blank line after the THEN on an IF line.
-# Options: true, false, preserve
-# Default: false
-tc_format_blank_line_after_if_then = false
-
-# Blank line after the THEN on an ELSIF line.
-# Options: true, false, preserve
-# Default: false
-tc_format_blank_line_after_elsif_then = false
-
-# Blank line after DO on a FOR or WHILE line.
-# Options: true, false, preserve
-# Default: false
-tc_format_blank_line_after_do = false
-
-# Blank line after a CASE-arm label whose colon ends the line.
-# Options: true, false, preserve
-# Default: false
-tc_format_blank_line_after_case_label = false
-
-# Vertical alignment
-# Alignment applies to short, compatible groups and is skipped for the entire
-# group if padding would exceed an active max_line_length.
-
-# Align declaration colons.
-# Options: true, false
-# Default: true
-# Example: short    : INT; / longName : DINT;
-tc_format_align_declarations = true
-
-# Align := initializers in declarations.
-# Options: true, false
-# Default: true
-tc_format_align_declaration_initializers = true
-
-# Align top-level statement assignment operators.
-# Options: true, false
-# Default: true
-tc_format_align_assignments = true
-
-# Align named input := operators within a multiline call.
-# Options: true, false
-# Default: true
-tc_format_align_named_inputs = true
-
-# Align named output => operators within a multiline call.
-# Options: true, false
-# Default: true
-tc_format_align_named_outputs = true
-
-# Align AT keywords in directly addressed declarations.
-# Options: true, false
-# Default: true
-tc_format_align_addresses = true
-
-# Align // comments on contiguous code lines with the same indentation.
-# Options: true, false
-# Default: false
-tc_format_align_end_of_line_comments = true
-
-# Wrapping
-
-# Function and function-block call wrapping.
-# Options:
-#   when_long - Wrap when max_line_length is exceeded.
-#   hanging - Keep the first argument beside the opening parenthesis and align
-#             later arguments beneath it when the call is long or multiline.
-#   always - Put every argument on a continuation line.
-#   preserve - Introduce no new breaks, but normalize existing lines.
-# Default: hanging
-tc_format_wrap_calls = hanging
-
-# Array and structure initializer wrapping.
-# Options:
-#   when_long - Wrap when max_line_length is exceeded.
-#   always - Put every item on a continuation line.
-#   preserve - Introduce no new breaks, but normalize existing lines.
-# Default: when_long
-tc_format_wrap_initializers = preserve
-
-# Binary-expression wrapping.
-# Options:
-#   when_long - Wrap when max_line_length is exceeded.
-#   always - Break at every configured binary operator.
-#   preserve - Introduce no new breaks, but normalize existing lines.
-# Default: when_long
-tc_format_wrap_binary_expressions = preserve
-
-# Side of an introduced line break on which a binary operator is placed.
-# Options:
-#   before - Put the operator at the beginning of the continuation line.
-#   after - Put the operator at the end of the preceding line.
-# Default: before
-tc_format_binary_operator_position = after
-
-# Spacing
-# Each boolean spacing option inserts one space when true and removes it when
-# false. Whitespace inside comments and string literals is never changed.
-
-# Space before a declaration colon.
-# Options:
-#   true - Produce "value : INT".
-#   false - Produce "value: INT".
-# Default: true
-tc_format_space_before_declaration_colon = true
-
-# Space after a declaration colon.
-# Options:
-#   true - Produce "value : INT".
-#   false - Produce "value :INT".
-# Default: true
-tc_format_space_after_declaration_colon = true
-
-# Spaces around statement and declaration operators such as := and REF=.
-# Options: true, false
-# Default: true
-tc_format_space_around_assignment_operators = true
-
-# Spaces around named input := and output => operators in calls and
-# initializers.
-# Options: true, false
-# Default: true
-tc_format_space_around_named_argument_operators = true
-
-# Spaces around arithmetic and binary operators such as +, -, *, /, **, and &.
-# Options: true, false
-# Default: true
-# Unary signs remain attached.
-tc_format_space_around_binary_operators = true
-
-# Spaces around =, <, >, <=, >=, <>, and ?=.
-# Options: true, false
-# Default: true
-tc_format_space_around_comparison_operators = true
-
-# Spaces around the two-dot range operator.
-# Options:
-#   true - Produce "values[1 .. 10]".
-#   false - Produce "values[1..10]".
-# Default: false
-tc_format_space_around_range_operator = false
-
-# Space after a comma when the next item is on the same line.
-# Options: true, false
-# Default: true
-tc_format_space_after_comma = true
-
-# Spaces immediately inside non-empty parentheses.
-# Options:
-#   true - Produce "Call( first )".
-#   false - Produce "Call(first)".
-# Default: false
-tc_format_space_inside_parentheses = false
-
-# Spaces immediately inside non-empty brackets.
-# Options:
-#   true - Produce "values[ index ]".
-#   false - Produce "values[index]".
-# Default: false
-tc_format_space_inside_brackets = false
-
-# Base gap between code and a trailing // comment.
-# Options: non_negative_integer
-# Default: 1
-# Comment alignment may add more spaces to this gap.
-tc_format_spaces_before_end_of_line_comment = 1
+```iecst
+Prepare();
+IF ready THEN
+    Run();
+ELSIF waiting THEN
+    Wait();
+ELSE
+    Stop();
+END_IF
+Finish();
 ```
-<!-- canonical-profile:end -->
 
-The values selected by this profile are deliberately explicit and do not
-always match the `Default:` line in the comments. An automated test keeps this
-copy synchronized with the canonical example.
+More whitespace:
+
+```iecst
+Prepare();
+
+IF ready THEN
+    Run();
+
+ELSIF waiting THEN
+    Wait();
+
+ELSE
+    Stop();
+
+END_IF
+
+Finish();
+```
+
+The more-whitespace profile uses `multiline` for these existing settings:
+
+```ini
+tc_format_blank_line_after_if_then = multiline
+tc_format_blank_line_after_elsif_then = multiline
+tc_format_blank_line_after_do = multiline
+```
+
+This mode adds one blank line after a multiline header and removes it after a
+single-line header. It uses the final formatted layout, including line breaks
+introduced by call or binary-expression wrapping. For example:
+
+```iecst
+IF ready THEN
+    Run();
+
+ELSIF waiting AND
+    connectionHealthy THEN
+
+    Resume();
+
+ELSE
+    Stop();
+
+END_IF
+```
+
+The existing `true`, `false`, and `preserve` values also apply when `THEN` or
+`DO` appears on a later line. `multiline` is supported only for these three
+header settings. `CASE` uses the case-label spacing options; `UNTIL` introduces
+a repeat loop's termination condition rather than a following body.
+
+`tc_format_blank_line_after_multiline_call` separates a long standalone call
+from the following statement. The more-whitespace profile sets it to `true`;
+the less-whitespace profile sets it to `false`. `preserve` retains existing
+spacing and is the built-in default. Calls that become multiline through
+wrapping also qualify. Short calls remain compact:
+
+```iecst
+_axis.Enable();
+_axis.Reset();
+_axis.MoveAbsolute(Position := targetPosition,
+                   Velocity := 20);
+
+completed := FALSE;
+```
+
+Nested calls do not introduce blank lines inside their enclosing statement.
+Calls used in declarations, assignments, and conditions are also excluded.
+Trailing comments stay attached to the call. The setting does not split
+multiple statements on a line when `tc_format_one_statement_per_line = false`.
+
+The profile options remain individually configurable. At a boundary shared by two
+policies, `false` takes precedence over `true`; the rule against blank lines
+after `ELSE` takes precedence over both. Case-label spacing applies when the
+label's colon ends its line. Loop options cover `FOR`, `WHILE`, and `REPEAT`;
+they do not add spacing rules for exception-handling keywords or `RETURN`/`EXIT`.
+
+## Annotated profiles
+
+Both [less whitespace](../examples/less-whitespace.editorconfig) and
+[more whitespace](../examples/more-whitespace.editorconfig) include every
+supported option, with its description, accepted values, and built-in default
+immediately above the setting. The assigned values select the profile and may
+differ from the documented defaults.
+
+These two files are the complete option references. Copy either one to your
+project root as `.editorconfig`, or merge its section into an existing file.
+Read the annotations above each setting when choosing a value that matches
+your preferred formatting style; the profiles are starting points you can edit.
+Property names and named values are case-insensitive. Tests check both profiles
+for complete option coverage and annotations matching the built-in defaults.
+
+## Choosing an initializer layout
+
+`tc_format_wrap_initializers` controls the layout of array entries and structure
+fields. `tc_format_align_declaration_initializers` only aligns the declaration's
+outer `:=` with nearby declarations; it does not align the entries inside it.
+
+Use `hanging` to keep the first entry beside the opening delimiter and align
+subsequent entries beneath it:
+
+```iecst
+axes := [(Name := 'Axis 1'),
+         (Name := 'Axis 2')];
+```
+
+Use `always` to put every entry on a continuation line and the closing delimiter
+on its own line. This avoids a large alignment offset after a long declaration:
+
+```iecst
+axes := [
+    (Name := 'Axis 1'),
+    (Name := 'Axis 2')
+];
+```
+
+`when_long` moves the first entry below the opening delimiter for a long or
+already multiline initializer, then adds breaks as needed for the width limit.
+`preserve` keeps existing breaks and applies ordinary continuation indentation.
+The built-in default remains `when_long`; both profiles select `always`.
+
+Hanging layout leaves short single-line initializers alone. When the first item
+already starts below the opening delimiter, it keeps ordinary continuation
+indentation. It also works with `max_line_length = off` for existing multiline
+initializers. As with calls, comments can prevent a break from being rewritten.
 
 ## Discovery, sections, and inheritance
 
@@ -404,4 +237,4 @@ tc_format_align_addresses = false
 This repository's root `.editorconfig` configures the formatter's C#
 implementation using reusable rules from
 [Roslyn's conventions](https://github.com/dotnet/roslyn/blob/main/.editorconfig).
-It is separate from the Structured Text profile above.
+It is separate from the Structured Text profiles above.

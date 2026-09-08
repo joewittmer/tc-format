@@ -13,7 +13,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\TcFormat.Core\TcFormat.Core.csproj" />
-    <None Include="..\..\examples\.editorconfig" Link="CompleteExample.editorconfig" CopyToOutputDirectory="Always" />
-    <None Include="..\..\docs\configuration.md" Link="ConfigurationGuide.md" CopyToOutputDirectory="Always" />
+    <None Include="..\..\examples\less-whitespace.editorconfig" Link="less-whitespace.editorconfig" CopyToOutputDirectory="Always" />
+    <None Include="..\..\examples\more-whitespace.editorconfig" Link="more-whitespace.editorconfig" CopyToOutputDirectory="Always" />
   </ItemGroup>
 </Project>

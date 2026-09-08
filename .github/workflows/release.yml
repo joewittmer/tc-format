@@ -82,7 +82,8 @@ jobs:
           Copy-Item LICENSE $portableDirectory
           Copy-Item README.md $portableDirectory
           Copy-Item THIRD-PARTY-NOTICES.md $portableDirectory
-          Copy-Item examples\.editorconfig "$portableDirectory\examples"
+          Copy-Item examples\less-whitespace.editorconfig "$portableDirectory\examples"
+          Copy-Item examples\more-whitespace.editorconfig "$portableDirectory\examples"
           Compress-Archive `
               -Path "$portableDirectory\*" `
               -DestinationPath "artifacts\release\tc_format-$version-win-x64.zip"
