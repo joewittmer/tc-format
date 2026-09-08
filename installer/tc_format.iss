@@ -1,11 +1,11 @@
 #define MyAppName "tc_format"
 
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.1.0"
+  #define MyAppVersion "1.0.2.0"
 #endif
 
 #ifndef MyAppVersionInfo
-  #define MyAppVersionInfo "1.0.1.0"
+  #define MyAppVersionInfo "1.0.2.0"
 #endif
 
 #ifndef MyPublishDir
