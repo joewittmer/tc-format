@@ -20,7 +20,7 @@ Choose a complete profile and copy it to your Structured Text project root as
   `FOR` and `WHILE` always get a blank line after `DO`.
   `REPEAT` retains its following blank line. There is **no blank
   line after `ELSE`**, even when its first statement is another `IF` or a loop.
-- [More whitespace without assignment alignment](../examples/more-whitespace-no-assignment-alignment.editorconfig)
+- [More whitespace without assignment alignment](../examples/more-whitespace-without-assignment-alignment.editorconfig)
   uses the same layout, but keeps single spaces around `:=` and `=>` in assignments,
   declaration initializers, and named parameters. Declaration-colon alignment
   remains enabled.
@@ -151,7 +151,7 @@ they do not add spacing rules for exception-handling keywords or `RETURN`/`EXIT`
 
 The [less whitespace](../examples/less-whitespace.editorconfig),
 [more whitespace](../examples/more-whitespace.editorconfig), and
-[more whitespace without assignment alignment](../examples/more-whitespace-no-assignment-alignment.editorconfig) profiles include every
+[more whitespace without assignment alignment](../examples/more-whitespace-without-assignment-alignment.editorconfig) profiles include every
 supported option, with its description, accepted values, and built-in default
 immediately above the setting. The assigned values select the profile and may
 differ from the documented defaults.

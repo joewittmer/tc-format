@@ -37,7 +37,7 @@ Three complete, annotated profiles are included:
 | --- | --- |
 | [Less whitespace](examples/less-whitespace.editorconfig) | Keeps control-flow boundaries compact and removes blank lines after multiline calls. |
 | [More whitespace](examples/more-whitespace.editorconfig) | Separates control-flow sections, multiline conditions, and multiline calls with blank lines. Expands multiline arguments with leading operators, adds a blank line after `DO`, and keeps `ELSE` tight. |
-| [More whitespace without assignment alignment](examples/more-whitespace-no-assignment-alignment.editorconfig) | Uses the more-whitespace layout with single spaces around `:=` and `=>`, without padding assignments, declaration initializers, or named parameters into columns. |
+| [More whitespace without assignment alignment](examples/more-whitespace-without-assignment-alignment.editorconfig) | Uses the more-whitespace layout with single spaces around `:=` and `=>`, without padding assignments, declaration initializers, or named parameters into columns. |
 
 All use four-space indentation, hanging call alignment, and `always` initializer
 wrapping, which puts each array entry or structure field on a continuation line.

@@ -79,7 +79,7 @@ public sealed class WhitespaceProfileTests
     [Theory]
     [InlineData("less-whitespace")]
     [InlineData("more-whitespace")]
-    [InlineData("more-whitespace-no-assignment-alignment")]
+    [InlineData("more-whitespace-without-assignment-alignment")]
     public void ProfilesExplicitlyConfigureEveryOptionAndKeepSelectedWrapping(string profile)
     {
         var directory = Path.Combine(AppContext.BaseDirectory, "Profiles", profile);
@@ -151,7 +151,7 @@ public sealed class WhitespaceProfileTests
     }
 
     [Theory]
-    [InlineData("more-whitespace-no-assignment-alignment", "", "", "")]
+    [InlineData("more-whitespace-without-assignment-alignment", "", "", "")]
     [InlineData("more-whitespace", "  ", "       ", "       ")]
     public void MoreWhitespaceProfilesChooseAssignmentAlignment(string profile, string initializerPadding, string assignmentPadding, string inputPadding)
     {

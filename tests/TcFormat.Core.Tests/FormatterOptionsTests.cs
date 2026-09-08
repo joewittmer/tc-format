@@ -84,7 +84,7 @@ public sealed class FormatterOptionsTests
     [Theory]
     [InlineData("less-whitespace.editorconfig")]
     [InlineData("more-whitespace.editorconfig")]
-    [InlineData("more-whitespace-no-assignment-alignment.editorconfig")]
+    [InlineData("more-whitespace-without-assignment-alignment.editorconfig")]
     public void WhitespaceProfileExplicitlySetsEverySupportedOption(string profile)
     {
         var editorConfigPath = Path.Combine(AppContext.BaseDirectory, profile);
@@ -98,7 +98,7 @@ public sealed class FormatterOptionsTests
     [Theory]
     [InlineData("less-whitespace.editorconfig")]
     [InlineData("more-whitespace.editorconfig")]
-    [InlineData("more-whitespace-no-assignment-alignment.editorconfig")]
+    [InlineData("more-whitespace-without-assignment-alignment.editorconfig")]
     public void WhitespaceProfileKeepsSharedFormattingChoices(string profile)
     {
         var editorConfigPath = Path.Combine(AppContext.BaseDirectory, profile);
@@ -119,7 +119,7 @@ public sealed class FormatterOptionsTests
     [Theory]
     [InlineData("less-whitespace.editorconfig")]
     [InlineData("more-whitespace.editorconfig")]
-    [InlineData("more-whitespace-no-assignment-alignment.editorconfig")]
+    [InlineData("more-whitespace-without-assignment-alignment.editorconfig")]
     public void WhitespaceProfileAnnotatesEveryOptionWithAcceptedValuesAndBuiltInDefault(string profile)
     {
         var annotations = new List<string>();

@@ -1,11 +1,11 @@
 #define MyAppName "tc_format"
 
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.2.0"
+  #define MyAppVersion "1.0.3.0"
 #endif
 
 #ifndef MyAppVersionInfo
-  #define MyAppVersionInfo "1.0.2.0"
+  #define MyAppVersionInfo "1.0.3.0"
 #endif
 
 #ifndef MyPublishDir
@@ -68,7 +68,7 @@ Source: "..\THIRD-PARTY-NOTICES.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\assets\tc_format.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\examples\less-whitespace.editorconfig"; DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "..\examples\more-whitespace.editorconfig"; DestDir: "{app}\examples"; Flags: ignoreversion
-Source: "..\examples\more-whitespace-no-assignment-alignment.editorconfig"; DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\more-whitespace-without-assignment-alignment.editorconfig"; DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "{#MyVsixPath}"; DestDir: "{app}\integration"; DestName: "TcFormat.Xae.vsix"; Components: xae; Flags: ignoreversion
 Source: "{#MyVsixContentDir}\*"; DestDir: "{code:GetXaeExtensionDirectory}"; Components: xae; Flags: ignoreversion recursesubdirs createallsubdirs
 
