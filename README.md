@@ -1,8 +1,8 @@
 # tc_format
 
-`tc_format` formats Structured Text source files in [Beckhoff TwinCAT 3][beckhoff-twincat]
-PLC projects, including code embedded in TwinCAT XML files. Use it from the command
-line or the optional TwinCAT XAE extension; both use the same `.editorconfig`.
+`tc_format` formats Structured Text source files in [Beckhoff TwinCAT 3][beckhoff-twincat] PLC projects. 
+
+Use it from the command line or the optional TwinCAT XAE extension; both use the same `.editorconfig`.
 
 ## Quick start
 
