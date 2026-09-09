@@ -33,11 +33,11 @@ and project configuration.
 
 Three complete, annotated profiles are included:
 
-| Profile | Layout |
-| --- | --- |
-| [Less whitespace](examples/less-whitespace.editorconfig) | Keeps control-flow boundaries compact and removes blank lines after multiline calls. |
-| [More whitespace](examples/more-whitespace.editorconfig) | Separates control-flow sections, multiline conditions, and multiline calls with blank lines. Expands multiline arguments with leading operators, adds a blank line after `DO`, and keeps `ELSE` tight. |
-| [More whitespace without assignment alignment](examples/more-whitespace-without-assignment-alignment.editorconfig) | Uses the more-whitespace layout with single spaces around `:=` and `=>`, without padding assignments, declaration initializers, or named parameters into columns. |
+| Profile | Blank lines | Alignment | Multiline endings | Example |
+| --- | --- | --- | --- | --- |
+| [Less whitespace](examples/less-whitespace.editorconfig) | Compact | Columns | After last item | [Example 1](#example-1-less-whitespace) |
+| [More whitespace](examples/more-whitespace.editorconfig) | Separated blocks and calls | Columns | Own line | [Example 2](#example-2-more-whitespace) |
+| [More whitespace without assignment alignment](examples/more-whitespace-without-assignment-alignment.editorconfig) | Separated blocks and calls | No padding before `:`, `:=`, or `=>` | Own line | [Example 3](#example-3-more-whitespace-without-assignment-alignment) |
 
 All use four-space indentation, hanging call alignment, and `always` initializer
 wrapping, which puts each array entry or structure field on a continuation line.
@@ -53,20 +53,97 @@ or merge its section into an existing `.editorconfig`. The example filenames
 are not discovered automatically. The installer and portable archive include
 all three profiles in their `examples` directory.
 
-For example, the more-whitespace profile produces this layout:
+The examples below format the **same code** with each profile. Compare the variable declarations, assignments, blank lines, and closing delimiters.
+
+### Example 1: Less whitespace
+
+**Compact spacing, aligned columns, closing delimiters after the last item.**
+
+[Use this profile](examples/less-whitespace.editorconfig)
 
 ```iecst
+VAR
+    i              : INT   := 0;
+    targetPosition : LREAL := 100;
+END_VAR
+positions := [
+    0,
+    100];
 IF ready THEN
-    _axis.Enable();
-    _axis.MoveAbsolute(Position := targetPosition,
-                       Velocity := 20);
+    FOR i := 0 TO 1 DO
+        _axis.Move(Position := positions[i],
+                   Velocity := 20);
+        moving            := TRUE;
+        requestedPosition := targetPosition;
+    END_FOR
+ELSE
+    _axis.Stop();
+END_IF
+```
 
-    moving := TRUE;
+### Example 2: More whitespace
 
-ELSIF waiting AND
-    connectionHealthy THEN
+**Blank lines around blocks and after multiline calls, aligned columns, closing delimiters on their own line.**
 
-    _axis.Reset();
+[Use this profile](examples/more-whitespace.editorconfig)
+
+```iecst
+VAR
+    i              : INT   := 0;
+    targetPosition : LREAL := 100;
+END_VAR
+positions := [
+    0,
+    100
+];
+
+IF ready THEN
+
+    FOR i := 0 TO 1 DO
+
+        _axis.Move(Position := positions[i],
+                   Velocity := 20
+        );
+
+        moving            := TRUE;
+        requestedPosition := targetPosition;
+
+    END_FOR
+
+ELSE
+    _axis.Stop();
+
+END_IF
+```
+
+### Example 3: More whitespace without assignment alignment
+
+**The same blank lines as Example 2, with single spaces around declaration colons and assignment operators.**
+
+[Use this profile](examples/more-whitespace-without-assignment-alignment.editorconfig)
+
+```iecst
+VAR
+    i : INT := 0;
+    targetPosition : LREAL := 100;
+END_VAR
+positions := [
+    0,
+    100
+];
+
+IF ready THEN
+
+    FOR i := 0 TO 1 DO
+
+        _axis.Move(Position := positions[i],
+                   Velocity := 20
+        );
+
+        moving := TRUE;
+        requestedPosition := targetPosition;
+
+    END_FOR
 
 ELSE
     _axis.Stop();
