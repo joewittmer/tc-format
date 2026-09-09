@@ -1,159 +1,81 @@
 # tc_format
 
-`tc_format` is a configurable formatter built specifically for Structured Text
-source files in PLC projects created with [Beckhoff TwinCAT 3][beckhoff-twincat].
-It is not intended to be a general-purpose IEC 61131-3 formatter.
+`tc_format` formats Structured Text source files in [Beckhoff TwinCAT 3][beckhoff-twincat]
+PLC projects, including code embedded in TwinCAT XML files. Use it from the command
+line or the optional TwinCAT XAE extension; both use the same `.editorconfig`.
 
-Use it directly from the command line, enforce formatting with a Git pre-commit
-hook or CI/CD pipeline, or install the optional TwinCAT XAE extension for
-editor commands and format-on-save. Every entry point uses the same formatter
-and project configuration.
+## Quick start
 
-## Features
+### 1. Install
 
-- Formats plain Structured Text files and the code regions embedded in TwinCAT
-  XML source files without rewriting the surrounding XML.
-- Normalizes indentation, keyword casing, line endings, whitespace, blank
-  lines, token spacing, and final newlines.
-- Aligns declarations, direct addresses, initializers, assignments, and named
-  call arguments. Hanging layouts keep continuation arguments aligned beneath
-  the first argument, including nested calls such as `CONCAT`.
-- Wraps calls, array and structure initializers, and binary expressions using a
-  configurable soft line-length limit.
-- Supports blank lines after multiline calls and conditional spacing after
-  multiline `IF`, `ELSIF`, `FOR`, and `WHILE` headers, including headers expanded
-  by automatic wrapping.
-- Resolves formatting rules from standard `.editorconfig` files, including
-  inheritance and per-directory overrides.
-- Validates an entire CLI operation before writing and atomically replaces each
-  changed file, avoiding partial results caused by invalid source or
-  configuration.
+Follow the [installation guide](docs/installation.md) to install the formatter
+and, optionally, the TwinCAT XAE extension.
 
-## Choose a formatting profile
+### 2. Pick one profile
 
-Three complete, annotated profiles are included:
+Choose the style closest to your preference. Each file is ready to use and
+includes comments explaining every setting.
 
-| Profile | Blank lines | Alignment | Multiline endings | Example |
-| --- | --- | --- | --- | --- |
-| [Less whitespace](examples/less-whitespace.editorconfig) | Compact | Columns | After last item | [Example 1](#example-1-less-whitespace) |
-| [More whitespace](examples/more-whitespace.editorconfig) | Separated blocks and calls | Columns | Own line | [Example 2](#example-2-more-whitespace) |
-| [More whitespace without assignment alignment](examples/more-whitespace-without-assignment-alignment.editorconfig) | Separated blocks and calls | No padding before `:`, `:=`, or `=>` | Own line | [Example 3](#example-3-more-whitespace-without-assignment-alignment) |
+| Profile to copy | Style | Preview |
+| --- | --- | --- |
+| [Less whitespace](examples/less-whitespace.editorconfig) | Compact blocks, aligned columns, multiline `)` and `]` after the last item | [Example 1](docs/configuration.md#example-1-less-whitespace) |
+| [More whitespace](examples/more-whitespace.editorconfig) | Blank lines around blocks and after multiline calls, aligned columns, multiline `)` and `]` on their own line | [Example 2](docs/configuration.md#example-2-more-whitespace) |
+| [More whitespace without assignment alignment](examples/more-whitespace-without-assignment-alignment.editorconfig) | More whitespace, with single spaces around declaration `:`, assignment `:=`, and named parameter `:=` / `=>` operators | [Example 3](docs/configuration.md#example-3-more-whitespace-without-assignment-alignment) |
 
-All use four-space indentation, hanging call alignment, and `always` initializer
-wrapping, which puts each array entry or structure field on a continuation line.
-The third profile disables declaration-colon, `:=`, and `=>` alignment. Each option has
-comments explaining its purpose, accepted values, and built-in default; the
-selected profile values may differ from those defaults.
+To customize the style, follow the [configuration walkthrough](docs/configuration.md#build-your-own-configuration)
+and edit the annotated settings in your `.editorconfig`.
 
-For multiline expressions, less whitespace places closing `)` and `]` after the
-last item. Both more-whitespace profiles put them on their own line.
+### 3. Add it to your project
 
-Copy the chosen file to your Structured Text project root as `.editorconfig`,
-or merge its section into an existing `.editorconfig`. The example filenames
-are not discovered automatically. The installer and portable archive include
-all three profiles in their `examples` directory.
+Place `.editorconfig` in the folder containing your PLC project (`.plcproj`),
+or a parent folder covering the projects you want to format.
 
-The examples below format the **same code** with each profile. Compare the variable declarations, assignments, blank lines, and closing delimiters.
+- **New `.editorconfig`:** copy the entire chosen profile into that folder and
+  name it exactly `.editorconfig`.
+- **Existing `.editorconfig`:** copy the profile's section starting at
+  `[*.{st,iecst,TcPOU,TcDUT,TcGVL,TcITF,TcPRG}]`, including all settings and comments
+  below it. If that section already exists, merge the settings into it, replacing
+  matching properties. Keep unrelated sections and the existing `root` setting.
 
-### Example 1: Less whitespace
+The example filenames are not discovered automatically. When creating a nested
+`.editorconfig` that should inherit parent settings, omit `root = true`.
+Profiles also ship in the installer and portable archive's `examples` directory.
 
-**Compact spacing, aligned columns, closing delimiters after the last item.**
+### 4. Format your code
 
-[Use this profile](examples/less-whitespace.editorconfig)
+With the TwinCAT XAE extension installed:
 
-```iecst
-VAR
-    i              : INT   := 0;
-    targetPosition : LREAL := 100;
-END_VAR
-positions := [
-    0,
-    100];
-IF ready THEN
-    FOR i := 0 TO 1 DO
-        _axis.Move(Position := positions[i],
-                   Velocity := 20);
-        moving            := TRUE;
-        requestedPosition := targetPosition;
-    END_FOR
-ELSE
-    _axis.Stop();
-END_IF
+- **Keyboard:** in the Structured Text editor, press `Ctrl+R`, then `Ctrl+F`
+  (the [default shortcut](docs/xae-shortcut.md#keyboard-shortcut)).
+- **Editor right-click:** choose **Format Active TwinCAT Structured Text** to
+  format the active item's declaration and implementation.
+- **Solution Explorer right-click:** select a source file, folder, or project
+  and choose **Format Structured Text**. Folders and projects include supported
+  files in subfolders. See [Format from Solution Explorer](docs/xae-shortcut.md#format-from-solution-explorer).
+
+Or, use these common CLI commands from your project folder. Folder formatting
+includes supported source files in all subfolders and uses each file's
+`.editorconfig` settings.
+
+```powershell
+# Format the current folder and its subfolders in place.
+tc_format .
+
+# Format a specific folder (quote paths containing spaces).
+tc_format "C:\Projects\My PLC Project"
+
+# Check a folder without changing any files.
+tc_format --check .
+
+# Format one file.
+tc_format "POUs\MAIN.TcPOU"
+
+# Show available commands.
+tc_format --help
 ```
 
-### Example 2: More whitespace
-
-**Blank lines around blocks and after multiline calls, aligned columns, closing delimiters on their own line.**
-
-[Use this profile](examples/more-whitespace.editorconfig)
-
-```iecst
-VAR
-    i              : INT   := 0;
-    targetPosition : LREAL := 100;
-END_VAR
-positions := [
-    0,
-    100
-];
-
-IF ready THEN
-
-    FOR i := 0 TO 1 DO
-
-        _axis.Move(Position := positions[i],
-                   Velocity := 20
-        );
-
-        moving            := TRUE;
-        requestedPosition := targetPosition;
-
-    END_FOR
-
-ELSE
-    _axis.Stop();
-
-END_IF
-```
-
-### Example 3: More whitespace without assignment alignment
-
-**The same blank lines as Example 2, with single spaces around declaration colons and assignment operators.**
-
-[Use this profile](examples/more-whitespace-without-assignment-alignment.editorconfig)
-
-```iecst
-VAR
-    i : INT := 0;
-    targetPosition : LREAL := 100;
-END_VAR
-positions := [
-    0,
-    100
-];
-
-IF ready THEN
-
-    FOR i := 0 TO 1 DO
-
-        _axis.Move(Position := positions[i],
-                   Velocity := 20
-        );
-
-        moving := TRUE;
-        requestedPosition := targetPosition;
-
-    END_FOR
-
-ELSE
-    _axis.Stop();
-
-END_IF
-```
-
-Use the profiles themselves as the complete option references. The
-[configuration guide](docs/configuration.md) explains profile differences,
-initializer layouts, inheritance, and how interacting settings are resolved.
+See [command-line usage](docs/cli.md) for supported file types, excluded
+directories, and exit codes.
 
 ## Documentation
 
