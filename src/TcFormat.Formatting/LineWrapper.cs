@@ -38,13 +38,13 @@ internal static class LineWrapper
             var candidate = SelectCandidate(analysis, options.Layout.MaximumLineLength);
             if (candidate is null)
             {
-                return IndentExpandedArguments(output, options);
+                return IndentExpandedArguments(JoinClosingDelimiters(output, options), options);
             }
 
             ApplyBreak(output, candidate);
         }
 
-        return IndentExpandedArguments(output, options);
+        return IndentExpandedArguments(JoinClosingDelimiters(output, options), options);
     }
 
     private static LayoutAnalysis Analyze(IReadOnlyList<SyntaxToken> tokens, FormatterOptions options)
@@ -103,9 +103,11 @@ internal static class LineWrapper
                 if (scopes.Count > 0)
                 {
                     var scope = scopes[^1];
-                    if (scope.Style == WrapStyle.Always)
+                    var closingStyle = GetClosingStyle(token.Text, options);
+                    if (closingStyle == ClosingDelimiterStyle.OwnLine && scope.IsMultiline ||
+                        closingStyle == ClosingDelimiterStyle.Preserve && scope.Style == WrapStyle.Always)
                     {
-                        AddBeforeCandidate(tokens, index, line, scope.Style, scope.BaseIndentation, candidates);
+                        AddBeforeCandidate(tokens, index, line, WrapStyle.Always, scope.BaseIndentation, candidates);
                     }
 
                     scopes.RemoveAt(scopes.Count - 1);
@@ -149,6 +151,45 @@ internal static class LineWrapper
         }
 
         return new LayoutAnalysis(lines, candidates);
+    }
+
+    private static ClosingDelimiterStyle GetClosingStyle(string delimiter, FormatterOptions options) =>
+        delimiter == ")" ? options.Wrapping.MultilineClosingParenthesis : options.Wrapping.MultilineClosingBracket;
+
+    private static IReadOnlyList<SyntaxToken> JoinClosingDelimiters(
+        IReadOnlyList<SyntaxToken> tokens, FormatterOptions options)
+    {
+        var output = new List<SyntaxToken>(tokens.Count);
+        foreach (var token in tokens)
+        {
+            if (token.Text is ")" or "]" && GetClosingStyle(token.Text, options) == ClosingDelimiterStyle.SameLine)
+            {
+                var previous = output.Count - 1;
+                var hasBreak = false;
+                while (previous >= 0 && output[previous].Kind is SyntaxKind.Whitespace or SyntaxKind.NewLine)
+                {
+                    hasBreak |= output[previous].Kind == SyntaxKind.NewLine;
+                    previous--;
+                }
+
+                // Keep a separate line when joining would cross a comment or directive.
+                if (hasBreak && previous >= 0 &&
+                    output[previous].Kind is not SyntaxKind.LineComment and not SyntaxKind.BlockComment and not SyntaxKind.Pragma)
+                {
+                    var insideSpace = token.Text == ")" ? options.Spacing.InsideParentheses : options.Spacing.InsideBrackets;
+                    var empty = output[previous].Text is "(" or "[";
+                    output.RemoveRange(previous + 1, output.Count - previous - 1);
+                    if (insideSpace && !empty)
+                    {
+                        output.Add(new SyntaxToken(SyntaxKind.Whitespace, " ", token.Offset, token.Line, -1));
+                    }
+                }
+            }
+
+            output.Add(token);
+        }
+
+        return output;
     }
 
     private static IReadOnlyList<SyntaxToken> NormalizeExpandedOperators(
@@ -553,7 +594,8 @@ internal static class LineWrapper
             style,
             structuralIndentation,
             GetHangingIndentation(tokens, line, openingIndex, options.Indentation.TabWidth),
-            useHangingIndentation);
+            useHangingIndentation,
+            ContainsLineBreak(tokens, openingIndex));
     }
 
     private static bool ShouldBreakAfterOpeningDelimiter(
@@ -957,6 +999,8 @@ internal static class LineWrapper
     }
 
     private static bool AllWrappingIsPreserved(FormatterOptions options) =>
+        options.Wrapping.MultilineClosingParenthesis == ClosingDelimiterStyle.Preserve &&
+        options.Wrapping.MultilineClosingBracket == ClosingDelimiterStyle.Preserve &&
         !options.Wrapping.ExpandMultilineArguments &&
         options.Wrapping.Calls == WrapStyle.Preserve &&
         options.Wrapping.Initializers == WrapStyle.Preserve &&
@@ -987,7 +1031,8 @@ internal static class LineWrapper
         WrapStyle Style,
         string BaseIndentation,
         string HangingIndentation,
-        bool UseHangingIndentation);
+        bool UseHangingIndentation,
+        bool IsMultiline);
 
     private enum DelimiterKind
     {

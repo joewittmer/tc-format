@@ -46,6 +46,8 @@ public static class EditorConfigOptionCatalog
             ["tc_format_align_end_of_line_comments"] = "false",
             ["tc_format_wrap_calls"] = "hanging",
             ["tc_format_expand_multiline_arguments"] = "false",
+            ["tc_format_multiline_closing_parenthesis"] = "preserve",
+            ["tc_format_multiline_closing_bracket"] = "preserve",
             ["tc_format_wrap_initializers"] = "when_long",
             ["tc_format_wrap_binary_expressions"] = "when_long",
             ["tc_format_binary_operator_position"] = "before",

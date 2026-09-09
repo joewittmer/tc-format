@@ -264,6 +264,23 @@ tc_format_wrap_calls = hanging
 # Default: false
 tc_format_expand_multiline_arguments = true
 
+# Placement of the closing parenthesis in a multiline call or expression.
+# Options:
+#   preserve - Keep closing placement chosen by the wrapping style.
+#   own_line - Put the closing parenthesis on a separate line.
+#   same_line - Place it after the last item, unless a comment prevents joining.
+# Default: preserve
+# Single-line expressions remain on one line.
+tc_format_multiline_closing_parenthesis = own_line
+
+# Placement of the closing bracket in a multiline array or expression.
+# Options:
+#   preserve - Keep closing placement chosen by the wrapping style.
+#   own_line - Put the closing bracket on a separate line.
+#   same_line - Place it after the last item, unless a comment prevents joining.
+# Default: preserve
+tc_format_multiline_closing_bracket = own_line
+
 # Array and structure initializer wrapping.
 # Options:
 #   when_long - Wrap when max_line_length is exceeded.

@@ -45,6 +45,9 @@ The third profile disables declaration-colon, `:=`, and `=>` alignment. Each opt
 comments explaining its purpose, accepted values, and built-in default; the
 selected profile values may differ from those defaults.
 
+For multiline expressions, less whitespace places closing `)` and `]` after the
+last item. Both more-whitespace profiles put them on their own line.
+
 Copy the chosen file to your Structured Text project root as `.editorconfig`,
 or merge its section into an existing `.editorconfig`. The example filenames
 are not discovered automatically. The installer and portable archive include

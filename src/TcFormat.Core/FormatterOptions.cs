@@ -34,6 +34,13 @@ public enum BinaryOperatorPosition
     After
 }
 
+public enum ClosingDelimiterStyle
+{
+    Preserve,
+    OwnLine,
+    SameLine
+}
+
 public enum BlankLinePolicy
 {
     Remove,
@@ -95,7 +102,9 @@ public sealed record WrappingOptions(
     WrapStyle Initializers,
     WrapStyle BinaryExpressions,
     BinaryOperatorPosition BinaryOperatorPosition,
-    bool ExpandMultilineArguments = false);
+    bool ExpandMultilineArguments = false,
+    ClosingDelimiterStyle MultilineClosingParenthesis = ClosingDelimiterStyle.Preserve,
+    ClosingDelimiterStyle MultilineClosingBracket = ClosingDelimiterStyle.Preserve);
 
 public sealed record SpacingOptions(
     bool BeforeDeclarationColon,
@@ -188,6 +197,8 @@ public sealed record FormatterOptions(
         ValidateEnum(Wrapping.Initializers, nameof(Wrapping.Initializers), errors);
         ValidateEnum(Wrapping.BinaryExpressions, nameof(Wrapping.BinaryExpressions), errors);
         ValidateEnum(Wrapping.BinaryOperatorPosition, nameof(Wrapping.BinaryOperatorPosition), errors);
+        ValidateEnum(Wrapping.MultilineClosingParenthesis, nameof(Wrapping.MultilineClosingParenthesis), errors);
+        ValidateEnum(Wrapping.MultilineClosingBracket, nameof(Wrapping.MultilineClosingBracket), errors);
         ValidateBlankLinePolicy(BlankLines.BeforeVariableBlock, nameof(BlankLines.BeforeVariableBlock), errors);
         ValidateBlankLinePolicy(BlankLines.BeforeIf, nameof(BlankLines.BeforeIf), errors);
         ValidateBlankLinePolicy(BlankLines.BeforeCase, nameof(BlankLines.BeforeCase), errors);

@@ -131,7 +131,8 @@ wrapping also qualify. Short calls remain compact:
 _axis.Enable();
 _axis.Reset();
 _axis.MoveAbsolute(Position := targetPosition,
-                   Velocity := 20);
+                   Velocity := 20
+);
 
 completed := FALSE;
 ```
@@ -210,13 +211,63 @@ Several short arguments on separate lines still use the selected call layout:
 
 ```iecst
 Move(Position := target,
-     Velocity := speed);
+     Velocity := speed
+);
 ```
 
 Operator position remains a separate preference. Inside expanded arguments it
 also moves existing operator breaks, even when binary-expression wrapping is
 `preserve`. It does not move an operator across a comment. Outside expanded
 arguments, operator position controls newly introduced breaks as before.
+
+## Closing parentheses and brackets
+
+Control closing-delimiter placement independently for multiline expressions:
+
+```ini
+tc_format_multiline_closing_parenthesis = same_line
+tc_format_multiline_closing_bracket = same_line
+```
+
+Each option accepts:
+
+- `preserve` (default): keep closing placement chosen by the wrapping style.
+- `own_line`: place the closing delimiter on its own line.
+- `same_line`: place the closing delimiter after the last item.
+
+For example, `same_line` produces:
+
+```iecst
+monitor : FB_Monitor := (
+    Name := 'monitor',
+    Reset := reset);
+
+sensors := [
+    (Name := 'one'),
+    (Name := 'two')];
+```
+
+With `own_line`, the endings instead look like:
+
+```iecst
+monitor : FB_Monitor := (
+    Name := 'monitor',
+    Reset := reset
+);
+
+sensors := [
+    (Name := 'one'),
+    (Name := 'two')
+];
+```
+
+These settings override closing placement for multiline calls, expanded
+arguments, initializers, and parenthesized or bracketed expressions, including
+when wrapping is `preserve`. Single-line expressions stay on one line.
+`same_line` retains a separate closing line if joining would cross a comment or
+directive. Ordinary inside-parenthesis and inside-bracket spacing still applies.
+The less-whitespace profile selects `same_line` for both settings. Both
+more-whitespace profiles select `own_line`. The built-in default remains `preserve`.
 
 ## Choosing an initializer layout
 

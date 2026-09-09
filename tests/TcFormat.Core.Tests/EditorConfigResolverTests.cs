@@ -334,6 +334,28 @@ public sealed class EditorConfigResolverTests
         }
     }
 
+    [Theory]
+    [InlineData("preserve", ClosingDelimiterStyle.Preserve, true)]
+    [InlineData("own_line", ClosingDelimiterStyle.OwnLine, true)]
+    [InlineData("same_line", ClosingDelimiterStyle.SameLine, true)]
+    [InlineData("sometimes", ClosingDelimiterStyle.Preserve, false)]
+    public void ResolvesClosingDelimiterPlacement(string value, ClosingDelimiterStyle expected, bool valid)
+    {
+        using var directory = new TemporaryDirectory();
+        directory.Write(".editorconfig", "root = true\n[*.st]\ntc_format_multiline_closing_parenthesis = " + value +
+                                        "\ntc_format_multiline_closing_bracket = " + value);
+        var result = new EditorConfigResolver().Resolve(directory.Write("Example.st", string.Empty));
+
+        Assert.Equal(valid, result.IsValid);
+        Assert.Equal(expected, result.Options.Wrapping.MultilineClosingParenthesis);
+        Assert.Equal(expected, result.Options.Wrapping.MultilineClosingBracket);
+        if (!valid)
+        {
+            Assert.Contains(result.Diagnostics, diagnostic => diagnostic.PropertyName == "tc_format_multiline_closing_parenthesis");
+            Assert.Contains(result.Diagnostics, diagnostic => diagnostic.PropertyName == "tc_format_multiline_closing_bracket");
+        }
+    }
+
     [Fact]
     public void MaximumLineLengthCanBeDisabled()
     {

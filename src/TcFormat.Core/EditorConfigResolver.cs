@@ -304,7 +304,23 @@ public sealed class EditorConfigResolver
                     "tc_format_expand_multiline_arguments",
                     defaults.Wrapping.ExpandMultilineArguments,
                     values,
-                    diagnostics)),
+                    diagnostics),
+                MultilineClosingParenthesis: ReadEnum(
+                    "tc_format_multiline_closing_parenthesis",
+                    defaults.Wrapping.MultilineClosingParenthesis,
+                    values,
+                    diagnostics,
+                    ("preserve", ClosingDelimiterStyle.Preserve),
+                    ("own_line", ClosingDelimiterStyle.OwnLine),
+                    ("same_line", ClosingDelimiterStyle.SameLine)),
+                MultilineClosingBracket: ReadEnum(
+                    "tc_format_multiline_closing_bracket",
+                    defaults.Wrapping.MultilineClosingBracket,
+                    values,
+                    diagnostics,
+                    ("preserve", ClosingDelimiterStyle.Preserve),
+                    ("own_line", ClosingDelimiterStyle.OwnLine),
+                    ("same_line", ClosingDelimiterStyle.SameLine))),
             Spacing: new SpacingOptions(
                 BeforeDeclarationColon: ReadBoolean(
                     "tc_format_space_before_declaration_colon",

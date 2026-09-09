@@ -96,6 +96,11 @@ public sealed class WhitespaceProfileTests
         Assert.Empty(resolved.Options.Validate());
         Assert.Equal(WrapStyle.Always, resolved.Options.Wrapping.Initializers);
         Assert.Equal(WrapStyle.Hanging, resolved.Options.Wrapping.Calls);
+        var closingStyle = profile.StartsWith("more", StringComparison.Ordinal)
+            ? ClosingDelimiterStyle.OwnLine
+            : ClosingDelimiterStyle.SameLine;
+        Assert.Equal(closingStyle, resolved.Options.Wrapping.MultilineClosingParenthesis);
+        Assert.Equal(closingStyle, resolved.Options.Wrapping.MultilineClosingBracket);
         Assert.Equal(profile.StartsWith("more", StringComparison.Ordinal) ? BlankLinePolicy.Require : BlankLinePolicy.Remove,
             resolved.Options.BlankLines.AfterMultilineCall);
     }
@@ -106,7 +111,8 @@ public sealed class WhitespaceProfileTests
     public void ProfilesSeparateMultilineCallsAndKeepShortCallsTogether(string profile, string gap)
     {
         const string source = "_axis.Enable();\n_axis.Reset();\n_axis.Move(100,\n20);\ncompleted := FALSE;";
-        var expected = "_axis.Enable();\r\n_axis.Reset();\r\n_axis.Move(100,\r\n           20);" +
+        var closingGap = profile == "more-whitespace" ? "\r\n" : "";
+        var expected = "_axis.Enable();\r\n_axis.Reset();\r\n_axis.Move(100,\r\n           20" + closingGap + ");" +
                        gap + "completed := FALSE;\r\n";
 
         AssertProfileOutput(profile, source, expected);
@@ -161,8 +167,8 @@ public sealed class WhitespaceProfileTests
         var declarationPadding = profile == "more-whitespace" ? "   " : "";
         var expected = "VAR\r\n    short " + declarationPadding + ": INT " + initializerPadding + ":= 1;\r\n    longName : LREAL := 2;\r\nEND_VAR\r\n\r\n" +
                        "IF ready THEN\r\n    x " + assignmentPadding + ":= 1;\r\n    longName := 2;\r\n" +
-                       "    Move(Position := target,\r\n         v " + inputPadding + ":= speed);\r\n\r\n" +
-                       "    Read(Position => target,\r\n         v " + inputPadding + "=> speed);\r\n\r\nEND_IF\r\n";
+                       "    Move(Position := target,\r\n         v " + inputPadding + ":= speed\r\n    );\r\n\r\n" +
+                       "    Read(Position => target,\r\n         v " + inputPadding + "=> speed\r\n    );\r\n\r\nEND_IF\r\n";
 
         AssertProfileOutput(profile, source, expected);
     }
@@ -178,6 +184,18 @@ public sealed class WhitespaceProfileTests
                                 "    moveToAbsolutePositionState : REFERENCE TO E_MoveState;\r\nEND_VAR\r\n";
 
         AssertProfileOutput("more-whitespace-without-assignment-alignment", source, expected);
+    }
+
+    [Theory]
+    [InlineData("less-whitespace", "")]
+    [InlineData("more-whitespace", "\r\n")]
+    [InlineData("more-whitespace-without-assignment-alignment", "\r\n")]
+    public void ProfilesChooseMultilineInitializerClosings(string profile, string closingGap)
+    {
+        AssertProfileOutput(profile, "values := [1, 2];",
+            "values := [\r\n    1,\r\n    2" + closingGap + "];\r\n");
+        AssertProfileOutput(profile, "item := (Name := 'one', Mode := 2);",
+            "item := (\r\n    Name := 'one',\r\n    Mode := 2" + closingGap + ");\r\n");
     }
 
     private static void AssertProfileOutput(string profile, string source, string expected)
