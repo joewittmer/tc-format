@@ -2,7 +2,7 @@
 param(
     [Parameter()]
     [ValidatePattern('^\d+\.\d+\.\d+(?:\.\d+)?(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$')]
-    [string] $Version = '1.0.6.0',
+    [string] $Version = '1.0.7.0',
 
     [Parameter()]
     [string] $PublishDirectory,
