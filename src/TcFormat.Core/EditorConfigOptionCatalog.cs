@@ -60,6 +60,7 @@ public static class EditorConfigOptionCatalog
             ["tc_format_space_around_range_operator"] = "false",
             ["tc_format_space_after_comma"] = "true",
             ["tc_format_space_inside_parentheses"] = "false",
+            ["tc_format_space_before_parentheses_after_keywords"] = "true",
             ["tc_format_space_inside_brackets"] = "false",
             ["tc_format_spaces_before_end_of_line_comment"] = "1"
         };

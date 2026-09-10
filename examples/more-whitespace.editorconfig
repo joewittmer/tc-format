@@ -359,6 +359,14 @@ tc_format_space_around_range_operator = false
 # Default: true
 tc_format_space_after_comma = true
 
+# Space before ( after IF, ELSIF, WHILE, UNTIL, CASE, AND, AND_THEN, OR,
+# OR_ELSE, XOR, NOT, and MOD. Function calls keep their existing compact style.
+# Options:
+#   true - Produce "IF (first) AND (second) OR (third) THEN".
+#   false - Produce "IF(first) AND(second) OR(third) THEN".
+# Default: true
+tc_format_space_before_parentheses_after_keywords = true
+
 # Spaces immediately inside non-empty parentheses.
 # Options:
 #   true - Produce "Call( first )".

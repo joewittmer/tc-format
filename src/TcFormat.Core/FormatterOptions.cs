@@ -117,7 +117,8 @@ public sealed record SpacingOptions(
     bool AfterComma,
     bool InsideParentheses,
     bool InsideBrackets,
-    int SpacesBeforeEndOfLineComment);
+    int SpacesBeforeEndOfLineComment,
+    bool BeforeParenthesesAfterKeywords = true);
 
 public sealed record FormatterOptions(
     KeywordCase KeywordCase,

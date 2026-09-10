@@ -45,7 +45,7 @@ public sealed class ControlHeaderBlankLineTests
 
     [Theory]
     [InlineData("IF first AND second THEN", "IF first\r\n    AND second THEN")]
-    [InlineData("IF (first AND second) THEN", "IF(first\r\n    AND second) THEN")]
+    [InlineData("IF (first AND second) THEN", "IF (first\r\n    AND second) THEN")]
     public void UsesFinalHeaderLayoutAfterBinaryWrapping(string sourceHeader, string expectedHeader)
     {
         var options = Options() with
@@ -95,7 +95,7 @@ public sealed class ControlHeaderBlankLineTests
             Wrapping = Options().Wrapping with { BinaryExpressions = WrapStyle.Always }
         };
         AssertFormatted("IF ready THEN\nIF (first AND second) THEN\nRun();\nEND_IF\nEND_IF",
-            "IF ready THEN\r\n    IF(first\r\n        AND second) THEN\r\n\r\n        Run();\r\n    END_IF\r\nEND_IF\r\n",
+            "IF ready THEN\r\n    IF (first\r\n        AND second) THEN\r\n\r\n        Run();\r\n    END_IF\r\nEND_IF\r\n",
             options);
     }
 

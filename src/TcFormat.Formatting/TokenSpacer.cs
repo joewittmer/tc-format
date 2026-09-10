@@ -187,6 +187,11 @@ internal static class TokenSpacer
 
         if (current.Token.Text is "(" or "[")
         {
+            if (current.Token.Text == "(" && IsParenthesizedExpressionKeyword(previous.Token))
+            {
+                return options.Spacing.BeforeParenthesesAfterKeywords ? 1 : 0;
+            }
+
             return IsOperator(previous.Token.Text) &&
                    ShouldSpaceOperator(previous.Token.Text, previous.DelimiterDepth, options)
                 ? 1
@@ -262,6 +267,11 @@ internal static class TokenSpacer
         var previous = index == 0 ? previousCode!.Text : items[index - 1].Token.Text;
         return IsOperator(previous) || previous is "(" or "[" or "," or ";";
     }
+
+    private static bool IsParenthesizedExpressionKeyword(SyntaxToken token) =>
+        token.Kind == SyntaxKind.Keyword && token.Text.ToUpperInvariant() is
+            "IF" or "ELSIF" or "WHILE" or "UNTIL" or "CASE" or
+            "AND" or "AND_THEN" or "OR" or "OR_ELSE" or "XOR" or "NOT" or "MOD";
 
     private static bool IsOperator(string text) => text is
         ":=" or "=>" or "REF=" or "?=" or

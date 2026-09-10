@@ -175,7 +175,7 @@ public sealed class StructuredTextFormatterTests
             "VAR\r\n" +
             "    value : INT := 1;\r\n" +
             "END_VAR\r\n" +
-            "IF(value >= 1) AND NOT done THEN\r\n" +
+            "IF (value >= 1) AND NOT done THEN\r\n" +
             "    fbRun(execute := TRUE, done => complete);\r\n" +
             "    slice := values[1..10];\r\n" +
             "    signedValue := -1;\r\n" +

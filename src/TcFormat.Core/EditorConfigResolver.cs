@@ -376,6 +376,11 @@ public sealed class EditorConfigResolver
                     "tc_format_spaces_before_end_of_line_comment",
                     defaults.Spacing.SpacesBeforeEndOfLineComment,
                     values,
+                    diagnostics),
+                BeforeParenthesesAfterKeywords: ReadBoolean(
+                    "tc_format_space_before_parentheses_after_keywords",
+                    defaults.Spacing.BeforeParenthesesAfterKeywords,
+                    values,
                     diagnostics)));
     }
 

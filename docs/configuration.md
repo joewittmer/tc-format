@@ -423,6 +423,22 @@ also moves existing operator breaks, even when binary-expression wrapping is
 `preserve`. It does not move an operator across a comment. Outside expanded
 arguments, operator position controls newly introduced breaks as before.
 
+## Spaces before parentheses after keywords
+
+By default, control-flow keywords and word operators have one space before an
+opening parenthesis: `IF (first) AND (second) OR (third) THEN`.
+The same setting covers `IF`, `ELSIF`, `WHILE`, `UNTIL`, `CASE`, `AND`, `AND_THEN`,
+`OR`, `OR_ELSE`, `XOR`, `NOT`, and `MOD`:
+
+```ini
+tc_format_space_before_parentheses_after_keywords = true
+```
+
+Set it to `false` for `IF(first) AND(second) OR(third) THEN`. It applies regardless
+of keyword case and is independent of inside-parenthesis and binary-operator
+spacing. Function calls such as `Check(value)` and `SIZEOF(value)` stay compact.
+All supplied profiles enable this setting.
+
 ## Closing parentheses and brackets
 
 Control closing-delimiter placement independently for multiline expressions:
