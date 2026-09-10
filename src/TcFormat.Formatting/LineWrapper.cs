@@ -27,7 +27,7 @@ internal static class LineWrapper
     {
         if (AllWrappingIsPreserved(options))
         {
-            return tokens;
+            return IndentDelimitedBlocks(tokens, options);
         }
 
         var output = NormalizeExpandedOperators(tokens, options).ToList();
@@ -38,13 +38,13 @@ internal static class LineWrapper
             var candidate = SelectCandidate(analysis, options.Layout.MaximumLineLength);
             if (candidate is null)
             {
-                return IndentExpandedArguments(JoinClosingDelimiters(output, options), options);
+                return IndentDelimitedBlocks(JoinClosingDelimiters(output, options), options);
             }
 
             ApplyBreak(output, candidate);
         }
 
-        return IndentExpandedArguments(JoinClosingDelimiters(output, options), options);
+        return IndentDelimitedBlocks(JoinClosingDelimiters(output, options), options);
     }
 
     private static LayoutAnalysis Analyze(IReadOnlyList<SyntaxToken> tokens, FormatterOptions options)
@@ -266,17 +266,13 @@ internal static class LineWrapper
         return changed ? TokenSpacer.Apply(output, options) : tokens;
     }
 
-    private static IReadOnlyList<SyntaxToken> IndentExpandedArguments(
+    private static IReadOnlyList<SyntaxToken> IndentDelimitedBlocks(
         IReadOnlyList<SyntaxToken> tokens, FormatterOptions options)
     {
-        if (!options.Wrapping.ExpandMultilineArguments)
-        {
-            return tokens;
-        }
-
         var output = new List<SyntaxToken>();
-        var scopes = new List<(bool Expanded, string Indentation, string? HangingIndentation)>();
+        var scopes = new List<(DelimiterKind Kind, bool Indented, string Indentation, string? HangingIndentation)>();
         SyntaxToken? previous = null;
+        var rootIndentation = string.Empty;
         foreach (var line in CreateLines(tokens, options.Indentation.TabWidth))
         {
             var start = line.Start;
@@ -291,13 +287,38 @@ internal static class LineWrapper
             }
 
             var indentation = line.LeadingWhitespace;
-            if (start < line.End && !line.ContainsMultilineToken && scopes.Any(scope => scope.Expanded))
+            if (scopes.Count == 0)
             {
-                var parent = scopes.Last(scope => scope.Expanded || scope.HangingIndentation is not null);
+                rootIndentation = indentation;
+            }
+
+            if (start < line.End && !line.ContainsMultilineToken && scopes.Any(scope => scope.Indented))
+            {
+                var parent = scopes.Last(scope => scope.Indented || scope.HangingIndentation is not null);
                 indentation = parent.HangingIndentation ??
-                    (tokens[start].Text is ")" or "]" && scopes[^1].Expanded
-                        ? parent.Indentation
-                        : GetContinuationIndentation(line, parent.Indentation, options));
+                    GetContinuationIndentation(line, parent.Indentation, options);
+
+                // A line can close several nested blocks, such as ]);.
+                var closingScope = scopes.Count - 1;
+                for (var index = start; index < line.End && closingScope >= 0; index++)
+                {
+                    if (tokens[index].Kind == SyntaxKind.Whitespace)
+                    {
+                        continue;
+                    }
+
+                    if (tokens[index].Text is not (")" or "]"))
+                    {
+                        break;
+                    }
+
+                    if (scopes[closingScope].Indented)
+                    {
+                        indentation = scopes[closingScope].Indentation;
+                    }
+
+                    closingScope--;
+                }
             }
 
             if (start < line.End && indentation.Length > 0)
@@ -317,17 +338,28 @@ internal static class LineWrapper
 
                 if (token.Text is "(" or "[")
                 {
-                    var call = token.Text == "(" && IsCallable(previous);
-                    var expanded = call && HasMultilineArgument(tokens, index);
+                    var kind = GetDelimiterKind(tokens, index, previous, scopes.LastOrDefault().Kind);
+                    // Structure entries inside arrays need their own indentation,
+                    // even when their wrapping is left to the enclosing initializer.
+                    if (kind == DelimiterKind.Other && token.Text == "(" &&
+                        scopes.LastOrDefault().Kind == DelimiterKind.Initializer && LooksLikeStructureInitializer(tokens, index))
+                    {
+                        kind = DelimiterKind.Initializer;
+                    }
+
+                    var call = kind == DelimiterKind.Call;
+                    var expanded = call && options.Wrapping.ExpandMultilineArguments && HasMultilineArgument(tokens, index);
+                    var style = call ? options.Wrapping.Calls : options.Wrapping.Initializers;
                     string? hanging = null;
-                    if (call && !expanded && options.Wrapping.Calls == WrapStyle.Hanging &&
+                    if (kind is DelimiterKind.Call or DelimiterKind.Initializer && !expanded && style == WrapStyle.Hanging &&
                         HasMultipleItems(tokens, index) && HasFirstItemOnOpeningLine(tokens, index))
                     {
                         hanging = indentation + GetHangingIndentation(tokens, line, index, options.Indentation.TabWidth)
                             [line.LeadingWhitespace.Length..];
                     }
 
-                    scopes.Add((expanded, indentation, hanging));
+                    var baseIndentation = scopes.Count == 0 ? rootIndentation : indentation;
+                    scopes.Add((kind, expanded || kind == DelimiterKind.Initializer, baseIndentation, hanging));
                 }
                 else if (token.Text is ")" or "]" && scopes.Count > 0)
                 {
@@ -556,16 +588,7 @@ internal static class LineWrapper
         IReadOnlyList<DelimiterScope> scopes,
         FormatterOptions options)
     {
-        var kind = tokens[openingIndex].Text switch
-        {
-            "(" when previous?.Text == ":=" && LooksLikeStructureInitializer(tokens, openingIndex) =>
-                DelimiterKind.Initializer,
-            "(" when IsCallable(previous) => DelimiterKind.Call,
-            "[" when previous?.Text == ":=" => DelimiterKind.Initializer,
-            "[" when previous?.Text is "[" or "," && scopes.LastOrDefault()?.Kind == DelimiterKind.Initializer =>
-                DelimiterKind.Initializer,
-            _ => DelimiterKind.Other
-        };
+        var kind = GetDelimiterKind(tokens, openingIndex, previous, scopes.LastOrDefault()?.Kind ?? DelimiterKind.Other);
         var style = kind switch
         {
             DelimiterKind.Call => options.Wrapping.Calls,
@@ -597,6 +620,19 @@ internal static class LineWrapper
             useHangingIndentation,
             ContainsLineBreak(tokens, openingIndex));
     }
+
+    private static DelimiterKind GetDelimiterKind(
+        IReadOnlyList<SyntaxToken> tokens, int openingIndex, SyntaxToken? previous, DelimiterKind parentKind) =>
+        tokens[openingIndex].Text switch
+        {
+            "(" when previous?.Text == ":=" && LooksLikeStructureInitializer(tokens, openingIndex) =>
+                DelimiterKind.Initializer,
+            "(" when IsCallable(previous) => DelimiterKind.Call,
+            "[" when previous?.Text == ":=" => DelimiterKind.Initializer,
+            "[" when previous?.Text is "[" or "," && parentKind == DelimiterKind.Initializer =>
+                DelimiterKind.Initializer,
+            _ => DelimiterKind.Other
+        };
 
     private static bool ShouldBreakAfterOpeningDelimiter(
         IReadOnlyList<SyntaxToken> tokens,

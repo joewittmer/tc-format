@@ -523,6 +523,24 @@ already starts below the opening delimiter, it keeps ordinary continuation
 indentation. It also works with `max_line_length = off` for existing multiline
 initializers. As with calls, comments can prevent a break from being rewritten.
 
+Nested arrays and structures indent from their enclosing block. For example,
+`always` initializer wrapping with `same_line` closing delimiters produces:
+
+```iecst
+beam : FB_Beam := (
+    Name := 'Upper Bending Beam',
+    WedgeAxisNames := [
+        'Wedge Axis 1',
+        'Wedge Axis 2'],
+    HookAxisNames := [
+        'Hook Axis 1',
+        'Hook Axis 2']);
+```
+
+Each nested block uses the configured continuation indentation. With `own_line`,
+each closing delimiter aligns with the line introducing its block. Existing
+nested blocks also receive this indentation when wrapping is `preserve`.
+
 ## Discovery, sections, and inheritance
 
 Settings are resolved independently for each source file. EditorConfig files
