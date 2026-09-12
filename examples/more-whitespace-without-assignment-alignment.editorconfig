@@ -205,11 +205,25 @@ tc_format_blank_line_after_control_flow_block = true
 # still take precedence when false, and the maximum blank-line count applies.
 tc_format_blank_line_after_multiline_call = true
 
+# Blank line before a standalone // or (* ... *) comment group.
+# Options: true, false, preserve
+# Default: preserve
+# Consecutive comments stay together. Trailing and inline comments are excluded.
+# Existing block-boundary removal rules and the maximum blank-line count apply.
+tc_format_blank_line_before_comment = true
+
+# Blank line after a standalone // or (* ... *) comment group.
+# Options: true, false, preserve
+# Default: preserve
+# false keeps the following code directly beneath its comments.
+# Consecutive comments and the text inside block comments are unchanged.
+tc_format_blank_line_after_comment = false
+
 # Vertical alignment
 # Alignment applies to short, compatible groups and is skipped for the entire
 # group if padding would exceed an active max_line_length.
 
-# Align declaration colons.
+# Align declaration colons and enable directly addressed variable alignment.
 # Options: true, false
 # Default: true
 # Example: short    : INT; / longName : DINT;
@@ -235,7 +249,7 @@ tc_format_align_named_inputs = false
 # Default: true
 tc_format_align_named_outputs = false
 
-# Align AT keywords in directly addressed declarations.
+# Align AT keywords in directly addressed declarations when declaration alignment is enabled.
 # Options: true, false
 # Default: true
 tc_format_align_addresses = true

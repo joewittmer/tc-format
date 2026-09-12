@@ -70,7 +70,7 @@ internal sealed class FormatOnSaveController : IVsRunningDocTableEvents3, IDispo
                 return VSConstants.S_OK;
             }
 
-            var originalText = ActiveDocument.GetText(activeDocument.View);
+            var originalText = activeDocument.GetText();
             var result = package.JoinableTaskFactory.Run(
                 () => formatterProcess.FormatAsync(
                     originalText,
@@ -82,9 +82,17 @@ internal sealed class FormatOnSaveController : IVsRunningDocTableEvents3, IDispo
                 return VSConstants.S_OK;
             }
 
+            var currentDocument = package.JoinableTaskFactory.Run(() => ActiveDocument.GetAsync(package));
+            if (!activeDocument.IsSameEditor(currentDocument) ||
+                !string.Equals(originalText, currentDocument.GetText(), StringComparison.Ordinal))
+            {
+                WriteOutput("The active editor or its text changed while tc_format was running. No formatter changes were applied.");
+                return VSConstants.S_OK;
+            }
+
             if (!string.Equals(originalText, result.FormattedText, StringComparison.Ordinal))
             {
-                ActiveDocument.ReplaceText(activeDocument.View, result.FormattedText);
+                activeDocument.ReplaceText(originalText, result.FormattedText);
                 WriteOutput("Formatted the active Structured Text editor before saving.");
             }
         }

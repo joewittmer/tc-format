@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -24,33 +23,35 @@ internal sealed class ActiveDocument
         ".tcprg"
     ];
 
-    private ActiveDocument(IVsTextView view, string filePath, string documentMoniker)
+    private ActiveDocument(IVsWindowFrame frame, IVsTextView view, IVsTextLines? buffer, string filePath,
+        string documentMoniker, TwinCatEditorPane? pane = null)
     {
+        Frame = frame;
         View = view;
+        Buffer = buffer;
         FilePath = filePath;
         DocumentMoniker = documentMoniker;
+        Pane = pane;
     }
 
-    public IVsTextView View { get; }
+    private IVsTextView View { get; }
+
+    private IVsWindowFrame Frame { get; }
+
+    private IVsTextLines? Buffer { get; }
+
+    private TwinCatEditorPane? Pane { get; }
 
     public string FilePath { get; }
 
-    public string DocumentMoniker { get; }
+    private string DocumentMoniker { get; }
 
-    public static async Task<ActiveDocument> GetAsync(AsyncPackage package)
+    public static async Task<ActiveDocument> GetAsync(AsyncPackage package, Action<string>? trace = null)
     {
         await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-        var textManager = await package.GetServiceAsync(typeof(SVsTextManager)) as IVsTextManager
-            ?? throw new InvalidOperationException("Visual Studio text manager is unavailable.");
-        ErrorHandler.ThrowOnFailure(textManager.GetActiveView(1, null, out var view));
-        if (view is null)
-        {
-            throw new InvalidOperationException(
-                "TwinCAT did not expose the active editor as a Visual Studio text view.");
-        }
-
         var selection = await package.GetServiceAsync(typeof(SVsShellMonitorSelection)) as IVsMonitorSelection
             ?? throw new InvalidOperationException("Visual Studio selection service is unavailable.");
+        await package.JoinableTaskFactory.SwitchToMainThreadAsync();
         ErrorHandler.ThrowOnFailure(selection.GetCurrentElementValue(
             (uint)VSConstants.VSSELELEMID.SEID_DocumentFrame,
             out var frameObject));
@@ -61,24 +62,85 @@ internal sealed class ActiveDocument
             out var pathObject));
         var documentMoniker = pathObject as string
             ?? throw new InvalidOperationException("The active TwinCAT document has no backing file path.");
+        trace?.Invoke($"Document: {documentMoniker}");
         var filePath = GetBackingFilePath(documentMoniker);
 
-        return new ActiveDocument(view, filePath, documentMoniker);
+        // Resolve both the identity and text view from this frame. The global text
+        // manager can retain a view belonging to a different TwinCAT document.
+        ErrorHandler.ThrowOnFailure(frame.GetProperty(
+            (int)__VSFPROPID.VSFPROPID_DocView,
+            out var documentView));
+        trace?.Invoke($"Document view: {documentView?.GetType().FullName ?? "null"}; " +
+            $"text view={documentView is IVsTextView}; code window={documentView is IVsCodeWindow}");
+        if (documentView is IVsTextView twinCatView && TwinCatEditorPane.TryCreate(documentView, trace) is { } pane)
+        {
+            return new ActiveDocument(frame, twinCatView, null, filePath, documentMoniker, pane);
+        }
+
+        IVsTextView? view;
+        // TwinCAT's VSEditor implements both interfaces. Its direct text view
+        // need not be the focused declaration/implementation pane.
+        if (documentView is IVsCodeWindow codeWindow)
+        {
+            trace?.Invoke("Selecting the code window's last active pane.");
+            ErrorHandler.ThrowOnFailure(codeWindow.GetLastActiveView(out view));
+        }
+        else
+        {
+            trace?.Invoke("Selecting the document's single text view.");
+            view = documentView as IVsTextView;
+        }
+
+        if (view is null)
+        {
+            throw new InvalidOperationException(
+                "TwinCAT did not expose a text view in the active document window. " +
+                "Formatting cannot continue. See the tc_format Output pane for details.");
+        }
+
+        ErrorHandler.ThrowOnFailure(view.GetBuffer(out var buffer));
+        trace?.Invoke($"Resolved editor window: 0x{view.GetWindowHandle().ToInt64():X}");
+
+        return new ActiveDocument(frame, view, buffer, filePath, documentMoniker);
     }
 
-    public static string GetText(IVsTextView view)
+    public bool IsSameEditor(ActiveDocument other) =>
+        ReferenceEquals(Frame, other.Frame) &&
+        ReferenceEquals(View, other.View) &&
+        ReferenceEquals(Buffer, other.Buffer) &&
+        (Pane is null ? other.Pane is null : other.Pane is not null && Pane.IsSamePane(other.Pane)) &&
+        string.Equals(DocumentMoniker, other.DocumentMoniker, StringComparison.OrdinalIgnoreCase);
+
+    public string GetText()
     {
         ThreadHelper.ThrowIfNotOnUIThread();
-        ErrorHandler.ThrowOnFailure(view.GetBuffer(out var buffer));
+        if (Pane is not null)
+        {
+            return Pane.GetText();
+        }
+
+        var buffer = Buffer!;
         ErrorHandler.ThrowOnFailure(buffer.GetLastLineIndex(out var lastLine, out var lastIndex));
         ErrorHandler.ThrowOnFailure(buffer.GetLineText(0, 0, lastLine, lastIndex, out var text));
         return text;
     }
 
-    public static void ReplaceText(IVsTextView view, string formattedText)
+    public void ReplaceText(string originalText, string formattedText, Action<string>? trace = null)
     {
         ThreadHelper.ThrowIfNotOnUIThread();
-        ErrorHandler.ThrowOnFailure(view.GetBuffer(out var buffer));
+        if (Pane is not null)
+        {
+            Pane.ReplaceText(originalText, formattedText, trace);
+            return;
+        }
+
+        if (!string.Equals(GetText(), originalText, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("The editor changed before formatting could be applied.");
+        }
+
+        var view = View;
+        var buffer = Buffer!;
         ErrorHandler.ThrowOnFailure(buffer.GetLastLineIndex(out var lastLine, out var lastIndex));
         ErrorHandler.ThrowOnFailure(view.GetCaretPos(out var caretLine, out var caretColumn));
         var compoundAction = view as IVsCompoundAction;
@@ -88,6 +150,7 @@ internal sealed class ActiveDocument
         var textPointer = Marshal.StringToCoTaskMemUni(formattedText);
         try
         {
+            trace?.Invoke("Replacing captured editor buffer.");
             ErrorHandler.ThrowOnFailure(buffer.ReplaceLines(
                 0,
                 0,
@@ -97,8 +160,14 @@ internal sealed class ActiveDocument
                 formattedText.Length,
                 null));
 
+            if (!string.Equals(GetText(), formattedText, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("The editor did not retain the exact formatted text.");
+            }
+
             if (compoundActionOpened)
             {
+                trace?.Invoke("Closing formatting undo action.");
                 compoundActionClosed = ErrorHandler.Succeeded(compoundAction!.CloseCompoundAction());
             }
         }
@@ -115,7 +184,9 @@ internal sealed class ActiveDocument
         var restoredLine = Math.Min(caretLine, newLastLine);
         ErrorHandler.ThrowOnFailure(buffer.GetLengthOfLine(restoredLine, out var restoredLineLength));
         var restoredColumn = Math.Min(caretColumn, restoredLineLength);
+        trace?.Invoke($"Restoring caret: {restoredLine}, {restoredColumn}.");
         ErrorHandler.ThrowOnFailure(view.SetCaretPos(restoredLine, restoredColumn));
+        trace?.Invoke("Editor replacement finished.");
     }
 
     public static bool IsSupportedFile(string filePath)
@@ -154,23 +225,4 @@ internal sealed class ActiveDocument
         return documentMoniker;
     }
 
-    public static IReadOnlyList<string> GetVirtualNodePath(string documentMoniker)
-    {
-        var backingFilePath = GetBackingFilePath(documentMoniker);
-        if (documentMoniker.Length <= backingFilePath.Length ||
-            documentMoniker[backingFilePath.Length] != '@')
-        {
-            return Array.Empty<string>();
-        }
-
-        var virtualPath = documentMoniker.Substring(backingFilePath.Length + 1);
-        var encodedSegments = virtualPath.Split(new[] { '@' }, StringSplitOptions.RemoveEmptyEntries);
-        var segments = new List<string>(encodedSegments.Length);
-        foreach (var encodedSegment in encodedSegments)
-        {
-            segments.Add(Uri.UnescapeDataString(encodedSegment));
-        }
-
-        return segments;
-    }
 }

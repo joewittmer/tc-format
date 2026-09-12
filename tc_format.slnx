@@ -10,4 +10,5 @@
   <Project Path="tests/TcFormat.Syntax.Tests/TcFormat.Syntax.Tests.csproj" />
   <Project Path="tests/TcFormat.TwinCat.Tests/TcFormat.TwinCat.Tests.csproj" />
   <Project Path="tests/TcFormat.Formatting.Tests/TcFormat.Formatting.Tests.csproj" />
+  <Project Path="tests/TcFormat.Xae.Tests/TcFormat.Xae.Tests.csproj" />
 </Solution>

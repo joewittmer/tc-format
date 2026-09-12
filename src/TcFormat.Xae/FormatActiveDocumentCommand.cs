@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -40,7 +42,7 @@ internal sealed class FormatActiveDocumentCommand
 
     private void Execute(object sender, EventArgs eventArgs)
     {
-        _ = package.JoinableTaskFactory.RunAsync(ExecuteAsync);
+        _ = package.JoinableTaskFactory.RunAsync(() => ExecuteAsync("FormatActiveDocument"));
     }
 
     private void RegisterShortcutCommands(OleMenuCommandService commandService)
@@ -71,30 +73,28 @@ internal sealed class FormatActiveDocumentCommand
         ThreadHelper.ThrowIfNotOnUIThread();
         if (package.GetGeneralOptions().FormatShortcut == shortcut)
         {
-            _ = package.JoinableTaskFactory.RunAsync(ExecuteAsync);
+            _ = package.JoinableTaskFactory.RunAsync(() => ExecuteAsync($"Shortcut: {shortcut}"));
         }
     }
 
-    private async Task ExecuteAsync()
+    private async Task ExecuteAsync(string trigger)
     {
+        var trace = new List<string>();
+        void Record(string message) => trace.Add($"{DateTimeOffset.Now:O} {message}");
+        Record($"tc_format XAE {typeof(TcFormatPackage).Assembly.GetName().Version}; {trigger}");
         try
         {
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-            var activeDocument = await ActiveDocument.GetAsync(package);
+            Record("Capturing active editor.");
+            var activeDocument = await ActiveDocument.GetAsync(package, Record);
             if (!ActiveDocument.IsSupportedFile(activeDocument.FilePath))
             {
                 await ReportErrorAsync("The active editor is not backed by a supported TwinCAT Structured Text file.");
                 return;
             }
 
-            var twinCatCodeItem = await TwinCatCodeItem.TryGetAsync(package, activeDocument);
-            if (twinCatCodeItem is not null)
-            {
-                await FormatTwinCatCodeItemAsync(twinCatCodeItem, activeDocument.FilePath);
-                return;
-            }
-
-            var originalText = ActiveDocument.GetText(activeDocument.View);
+            var originalText = activeDocument.GetText();
+            Record($"Captured {originalText.Length} characters; starting formatter.");
             var result = await formatterProcess.FormatAsync(
                 originalText,
                 activeDocument.FilePath,
@@ -103,81 +103,68 @@ internal sealed class FormatActiveDocumentCommand
 
             if (!result.Succeeded)
             {
+                Record($"Formatter failed: {result.Error}");
                 await ReportErrorAsync(result.Error);
                 return;
             }
 
-            if (!string.Equals(
+            Record("Checking active editor before applying result.");
+            var currentDocument = await ActiveDocument.GetAsync(package, Record);
+            if (!activeDocument.IsSameEditor(currentDocument) || !string.Equals(
                     originalText,
-                    ActiveDocument.GetText(activeDocument.View),
+                    currentDocument.GetText(),
                     StringComparison.Ordinal))
             {
-                await ReportErrorAsync("The editor changed while tc_format was running. No formatter changes were applied.");
+                Record("Discarded result: editor identity or text changed.");
+                await ReportErrorAsync("The active editor or its text changed while tc_format was running. No formatter changes were applied.");
                 return;
             }
 
             if (string.Equals(originalText, result.FormattedText, StringComparison.Ordinal))
             {
+                Record("Already formatted; no editor write.");
                 await WriteOutputAsync("Active Structured Text editor is already formatted.");
                 return;
             }
 
-            ActiveDocument.ReplaceText(activeDocument.View, result.FormattedText);
+            activeDocument.ReplaceText(originalText, result.FormattedText, Record);
+            Record("Checking active editor after replacement.");
+            var finalDocument = await ActiveDocument.GetAsync(package, Record);
+            if (!activeDocument.IsSameEditor(finalDocument))
+            {
+                Record("Editor changed during replacement.");
+                await ReportErrorAsync("XAE changed the active editor during formatting. " +
+                    "See the tc_format Output pane for the editor trace.");
+                return;
+            }
+
             await WriteOutputAsync("Formatted the active Structured Text editor. The document remains unsaved.");
         }
         catch (Exception exception)
         {
+            Record($"Error: {exception}");
             await package.JoinableTaskFactory.SwitchToMainThreadAsync();
             await ReportErrorAsync(exception.Message);
         }
+        finally
+        {
+            var diagnostics = string.Join(Environment.NewLine, trace);
+            try
+            {
+                var directory = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "tc_format", "Logs");
+                Directory.CreateDirectory(directory);
+                File.WriteAllText(Path.Combine(directory, "last-editor-format.log"), diagnostics);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                diagnostics += $"{Environment.NewLine}Could not save editor trace: {exception.Message}";
+            }
+
+            await WriteOutputAsync(diagnostics);
+        }
     }
-
-    private async Task FormatTwinCatCodeItemAsync(TwinCatCodeItem codeItem, string backingFilePath)
-    {
-        await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-        var original = codeItem.Read();
-        var declarationResult = await FormatSectionAsync(original.Declaration, backingFilePath);
-        var implementationResult = await FormatSectionAsync(original.Implementation, backingFilePath);
-        await package.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-        if (!declarationResult.Succeeded)
-        {
-            await ReportErrorAsync(declarationResult.Error);
-            return;
-        }
-
-        if (!implementationResult.Succeeded)
-        {
-            await ReportErrorAsync(implementationResult.Error);
-            return;
-        }
-
-        var formatted = new TwinCatCodeSnapshot(
-            original.Declaration is null ? null : declarationResult.FormattedText,
-            original.Implementation is null ? null : implementationResult.FormattedText);
-        var changedSections = codeItem.TryApply(original, formatted);
-        if (changedSections < 0)
-        {
-            await ReportErrorAsync(
-                "The TwinCAT editor changed while tc_format was running. No formatter changes were applied.");
-            return;
-        }
-
-        if (changedSections == 0)
-        {
-            await WriteOutputAsync("Active TwinCAT Structured Text item is already formatted.");
-            return;
-        }
-
-        await WriteOutputAsync(
-            $"Formatted {changedSections} section{(changedSections == 1 ? string.Empty : "s")} " +
-            "of the active TwinCAT Structured Text item. The document remains unsaved.");
-    }
-
-    private Task<FormatterProcessResult> FormatSectionAsync(string? source, string backingFilePath) =>
-        source is null
-            ? Task.FromResult(FormatterProcessResult.Success(string.Empty))
-            : formatterProcess.FormatAsync(source, backingFilePath, CancellationToken.None);
 
     private async Task ReportErrorAsync(string message)
     {

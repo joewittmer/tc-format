@@ -48,7 +48,7 @@ With the TwinCAT XAE extension installed:
 - **Keyboard:** in the Structured Text editor, press `Ctrl+R`, then `Ctrl+F`
   (the [default shortcut](docs/xae-shortcut.md#keyboard-shortcut)).
 - **Editor right-click:** choose **Format Active TwinCAT Structured Text** to
-  format the active item's declaration and implementation.
+  format the focused declaration or implementation pane.
 - **Solution Explorer right-click:** select a source file, folder, or project
   and choose **Format Structured Text**. Folders and projects include supported
   files in subfolders. See [Format from Solution Explorer](docs/xae-shortcut.md#format-from-solution-explorer).

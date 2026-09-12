@@ -25,7 +25,7 @@ internal sealed class FormatterProcess
         var arguments = $"--stdin-filepath {QuoteArgument(backingFilePath)}";
         var result = await RunAsync(arguments, source, cancellationToken);
         return result.Succeeded
-            ? FormatterProcessResult.Success(PreserveSectionFinalNewline(source, result.FormattedText))
+            ? FormatterProcessResult.Success(NormalizeSectionText(source, result.FormattedText))
             : result;
     }
 
@@ -157,7 +157,7 @@ internal sealed class FormatterProcess
         return quoted.ToString();
     }
 
-    internal static string PreserveSectionFinalNewline(string source, string formattedText)
+    internal static string NormalizeSectionText(string source, string formattedText)
     {
         var sourceLineEnding = DetectLineEnding(source);
         if (sourceLineEnding is not null)
@@ -168,34 +168,10 @@ internal sealed class FormatterProcess
                 .Replace("\n", sourceLineEnding);
         }
 
-        var sourceHasFinalNewline = EndsWithNewline(source);
-        var formattedHasFinalNewline = EndsWithNewline(formattedText);
-        if (sourceHasFinalNewline == formattedHasFinalNewline)
-        {
-            return formattedText;
-        }
-
-        if (!sourceHasFinalNewline)
-        {
-            if (formattedText.EndsWith("\r\n", StringComparison.Ordinal))
-            {
-                return formattedText.Substring(0, formattedText.Length - 2);
-            }
-
-            return formattedText.Substring(0, formattedText.Length - 1);
-        }
-
-        return formattedText + DetectFinalNewline(source);
+        // A final line ending is an empty visible row in an editor pane, unlike
+        // the final newline required for a source file on disk.
+        return formattedText.TrimEnd('\r', '\n');
     }
-
-    private static bool EndsWithNewline(string value) =>
-        value.EndsWith("\r", StringComparison.Ordinal) ||
-        value.EndsWith("\n", StringComparison.Ordinal);
-
-    private static string DetectFinalNewline(string value) =>
-        value.EndsWith("\r\n", StringComparison.Ordinal)
-            ? "\r\n"
-            : value.Substring(value.Length - 1);
 
     private static string? DetectLineEnding(string value)
     {

@@ -37,6 +37,8 @@ public static class EditorConfigOptionCatalog
             ["tc_format_blank_line_before_end_loop"] = "preserve",
             ["tc_format_blank_line_after_control_flow_block"] = "preserve",
             ["tc_format_blank_line_after_multiline_call"] = "preserve",
+            ["tc_format_blank_line_before_comment"] = "preserve",
+            ["tc_format_blank_line_after_comment"] = "preserve",
             ["tc_format_align_declarations"] = "true",
             ["tc_format_align_declaration_initializers"] = "true",
             ["tc_format_align_assignments"] = "true",

@@ -240,6 +240,16 @@ public sealed class EditorConfigResolver
                     "tc_format_blank_line_after_multiline_call",
                     defaults.BlankLines.AfterMultilineCall,
                     values,
+                    diagnostics),
+                BeforeComment: ReadBlankLinePolicy(
+                    "tc_format_blank_line_before_comment",
+                    defaults.BlankLines.BeforeComment,
+                    values,
+                    diagnostics),
+                AfterComment: ReadBlankLinePolicy(
+                    "tc_format_blank_line_after_comment",
+                    defaults.BlankLines.AfterComment,
+                    values,
                     diagnostics)),
             Alignment: new AlignmentOptions(
                 Declarations: ReadBoolean(

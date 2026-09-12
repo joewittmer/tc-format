@@ -43,6 +43,14 @@ internal static class StructuralIndenter
             var significant = line.Where(IsSignificant).ToArray();
             if (significant.Length == 0)
             {
+                if (line.FirstOrDefault(token => token.Kind != SyntaxKind.Whitespace)?.Kind == SyntaxKind.LineComment)
+                {
+                    AddWithIndentation(line, output,
+                        headerTerminator is not null ? headerIndentationDepth : blocks.Count,
+                        headerTerminator is not null || continuationDepth > 0);
+                    return;
+                }
+
                 foreach (var token in line)
                 {
                     output.Add(token);

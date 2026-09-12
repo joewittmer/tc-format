@@ -146,10 +146,18 @@ public static class StructuredTextFormatter
     {
         if (insert)
         {
-            if (output.Count == 0 || output[^1].Kind != SyntaxKind.NewLine)
+            var lastContent = output.FindLastIndex(token => token.Kind is not SyntaxKind.NewLine and not SyntaxKind.Whitespace);
+            var firstTrailingNewLine = output.FindIndex(lastContent + 1, token => token.Kind == SyntaxKind.NewLine);
+            if (lastContent < 0)
             {
-                output.Add(new RenderedToken(SyntaxKind.NewLine, newLine));
+                output.Clear();
             }
+            else if (firstTrailingNewLine >= 0)
+            {
+                output.RemoveRange(firstTrailingNewLine, output.Count - firstTrailingNewLine);
+            }
+
+            output.Add(new RenderedToken(SyntaxKind.NewLine, newLine));
 
             return;
         }

@@ -7,6 +7,45 @@ namespace TcFormat.Core.Tests;
 public sealed class EditorConfigResolverTests
 {
     [Theory]
+    [InlineData("true", BlankLinePolicy.Require, true)]
+    [InlineData("false", BlankLinePolicy.Remove, true)]
+    [InlineData("preserve", BlankLinePolicy.Preserve, true)]
+    [InlineData("unset", BlankLinePolicy.Preserve, true)]
+    [InlineData("multiline", BlankLinePolicy.Preserve, false)]
+    public void ResolvesBlankLineAfterComments(string value, BlankLinePolicy expected, bool valid)
+    {
+        using var directory = new TemporaryDirectory();
+        directory.Write(".editorconfig", "root = true\n[*.st]\ntc_format_blank_line_after_comment = " + value);
+        var result = new EditorConfigResolver().Resolve(directory.Write("Example.st", string.Empty));
+        Assert.Equal(valid, result.IsValid);
+        Assert.Equal(expected, result.Options.BlankLines.AfterComment);
+        if (!valid)
+        {
+            Assert.Contains(result.Diagnostics, diagnostic => diagnostic.PropertyName == "tc_format_blank_line_after_comment");
+        }
+    }
+
+    [Theory]
+    [InlineData("true", BlankLinePolicy.Require, true)]
+    [InlineData("false", BlankLinePolicy.Remove, true)]
+    [InlineData("preserve", BlankLinePolicy.Preserve, true)]
+    [InlineData("unset", BlankLinePolicy.Preserve, true)]
+    [InlineData("multiline", BlankLinePolicy.Preserve, false)]
+    public void ResolvesBlankLineBeforeComments(string value, BlankLinePolicy expected, bool valid)
+    {
+        using var directory = new TemporaryDirectory();
+        directory.Write(".editorconfig", "root = true\n[*.st]\ntc_format_blank_line_before_comment = " + value);
+        var result = new EditorConfigResolver().Resolve(directory.Write("Example.st", string.Empty));
+
+        Assert.Equal(valid, result.IsValid);
+        Assert.Equal(expected, result.Options.BlankLines.BeforeComment);
+        if (!valid)
+        {
+            Assert.Contains(result.Diagnostics, diagnostic => diagnostic.PropertyName == "tc_format_blank_line_before_comment");
+        }
+    }
+
+    [Theory]
     [InlineData("true", true, true)]
     [InlineData("false", false, true)]
     [InlineData("unset", true, true)]

@@ -25,12 +25,16 @@ After installation, open a Structured Text editor and choose:
 Tools → Format Active TwinCAT Structured Text
 ```
 
-TwinCAT exposes a POU or method's declaration and implementation as separate
-sections of one automation-model item. The extension sends both sections of the
-active item to the installed CLI and replaces their in-memory text with the
-results. It does not save the document or modify the backing file directly, so
-no external-change reload is needed. If both sections are already formatted,
-the command does not mark the document as modified.
+The extension formats the focused declaration or implementation pane in the
+open editor. It captures that pane's buffer and document identity, sends its
+text to the installed CLI, and replaces the text in the same buffer. The
+Solution Explorer selection does not choose the formatting target. To format
+the other pane, focus it and run the command again.
+
+The command does not save the document or modify the backing file directly, so
+no external-change reload is needed. If the pane is already formatted, the
+command does not mark the document as modified. If the active method, pane, or
+text changes while formatting runs, the result is discarded.
 
 The same command appears as **Format Active TwinCAT Structured Text** on the
 Structured Text editor's right-click menu.
@@ -116,14 +120,57 @@ available for XAE's **Find** command.
 
 ## Verify the extension
 
-1. Open a `.TcPOU`, `.TcDUT`, or `.TcGVL` implementation or declaration.
-2. Make a harmless spacing change without saving.
-3. Press the preset selected under **tc_format → General** and confirm that both
-   sections are formatted without an external-file reload.
-5. If format-on-save is enabled, repeat the spacing change and save. Confirm the
-   editor is formatted and is no longer marked as modified.
+1. Open two methods in the same function block, with different code. Make a
+   harmless spacing change in each without saving.
+2. Select the second method in Solution Explorer, then focus the first method's
+   implementation pane without opening another method from the tree.
+3. Press `Ctrl+R`, then `Ctrl+F` (or the selected preset). Confirm only the
+   focused pane is formatted, the same method remains open, and the other
+   method retains its unsaved text. Undo should restore the formatting change.
+4. Repeat with the declaration pane focused and with the editor's right-click
+   format command. Confirm each invocation edits only the focused pane and
+   requires no external-file reload.
+5. With a large input, switch methods or edit the text while formatting runs.
+   Confirm tc_format discards the result instead of writing it to another pane.
+6. If format-on-save is enabled, repeat the spacing change and save. Confirm the
+   focused pane is formatted and the document is no longer marked as modified.
 
 Use **View → Output** and select the `tc_format` pane when diagnosing a failure.
+
+The active-editor command first captures the active document's window frame.
+For TwinCAT, it reads the actual text control belonging to the focused pane,
+or the POU editor's selected declaration/implementation pane when a menu has
+taken keyboard focus. It does not use TwinCAT's synthesized Visual Studio search
+buffer: that buffer combines sections and can cache text independently of the
+visible editor. An ambiguous or unsupported pane stops formatting before editing.
+Ordinary Visual Studio text documents continue to use their frame's text view.
+
+TwinCAT replacements use the text control's native undo action and verify the
+result by reading the pane text back. A mismatched result triggers Undo and a
+second verification of the original text. Before a replacement, the original
+pane text is saved under `%LOCALAPPDATA%\tc_format\Recovery`; the trace identifies
+the exact recovery file. These files are local recovery copies, not project files.
+They are retained for manual recovery and can be removed when no longer needed.
+The adapter uses public members of TwinCAT's editor controls discovered through
+reflection, so compatibility with other TwinCAT editor versions needs verification.
+
+Formatting removes empty rows at the bottom of the declaration or implementation
+pane. The CLI still honors the configured final newline for files on disk.
+
+Each manual invocation records the extension version, command, document moniker,
+view type, and replacement stages in the `tc_format` Output pane and in
+`%LOCALAPPDATA%\tc_format\Logs\last-editor-format.log`. The file contains the
+latest invocation and includes local document paths, but not the editor's source
+text. If formatting changes tabs or selects another method, report the result
+after one attempt so this trace can be inspected before another run overwrites it.
+
+Include methods in different function blocks in the checks above, especially
+`FB_Machine` and `FB_Runner.CyclicLogic`. Test the Tools menu as well as the
+shortcut; both must keep the original document and focused pane.
+Also test a comment-only indentation or blank-line change after a previous
+formatting pass, with all code already formatted. Confirm the comment-only change
+is applied, no text is added at the end, trailing empty rows are removed, and Undo
+restores the exact pre-format text. Repeat in both panes.
 
 ## CLI-only fallback
 

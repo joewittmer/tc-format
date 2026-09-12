@@ -13,7 +13,7 @@ internal static class VerticalAligner
             lines,
             IsDeclarationLine,
             FindAddressKeyword,
-            options.Alignment.Addresses,
+            options.Alignment.Declarations && options.Alignment.Addresses,
             options);
         AlignGroups(
             lines,

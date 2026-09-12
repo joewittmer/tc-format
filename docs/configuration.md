@@ -6,6 +6,11 @@ Start with one of the preconfigured profiles below. You can use it as supplied
 or build your own style by following its annotations. `tc_format` reads these
 settings from `.editorconfig`; there is no separate profile selector.
 
+Trailing blank lines are removed from each formatted code region.
+`insert_final_newline = true` leaves exactly one terminating newline in files;
+the XAE extension removes the terminating newline from editor panes so it does
+not leave an empty row at the bottom.
+
 ## Use a preconfigured profile
 
 Choose one profile, just as in the [README quick start](../README.md#quick-start):
@@ -105,7 +110,7 @@ where you want a different result.
 | **File and indentation** | Spaces or tabs, indentation and tab widths, line endings, final newline, trailing whitespace, and a soft line-length limit. `off` disables width-triggered wrapping. |
 | **General behavior** | Keyword case, continuation indentation, and whether `CASE` labels are indented. Identifiers and string contents retain their spelling. |
 | **Statement and block layout** | One statement per line, the maximum blank-line count, and individual boundaries before or after control-flow keywords and multiline calls. The group comments explain `true`, `false`, and `preserve`; only the three `THEN` / `DO` settings also accept `multiline`. See [blank-line behavior](#blank-line-behavior). |
-| **Vertical alignment** | Padding for declaration colons, initializers, assignments, named inputs and outputs, direct addresses, and trailing comments. Each can be enabled independently. See [alignment preferences](#alignment-preferences). |
+| **Vertical alignment** | Padding for declaration colons, initializers, assignments, named inputs and outputs, direct addresses, and trailing comments. Direct-address padding follows declaration alignment; the other groups can be enabled independently. See [alignment preferences](#alignment-preferences). |
 | **Wrapping** | Call, initializer, and binary-expression layouts, expanded multiline arguments, operator position, and multiline closing `)` / `]` placement. See [expanded arguments](#expanded-multiline-arguments), [closing delimiters](#closing-parentheses-and-brackets), and [initializer layouts](#choosing-an-initializer-layout). |
 | **Spacing** | Single spaces around punctuation and operators, inside parentheses or brackets, and before trailing comments. Disabling column alignment does not remove these ordinary spaces. |
 
@@ -361,6 +366,46 @@ after `ELSE` takes precedence over both. Case-label spacing applies when the
 label's colon ends its line. Loop options cover `FOR`, `WHILE`, and `REPEAT`;
 they do not add spacing rules for exception-handling keywords or `RETURN`/`EXIT`.
 
+## Blank lines around comments
+
+Use one setting for standalone `//` and `(* ... *)` comment groups:
+
+```ini
+tc_format_blank_line_before_comment = true
+tc_format_blank_line_after_comment = false
+```
+
+`true` adds one blank line before a comment group, `false` removes blank lines
+at that boundary, and `preserve` (the default) keeps the existing spacing.
+The more-whitespace profiles use `true`; the less-whitespace profile uses `false`.
+
+`tc_format_blank_line_after_comment` controls the boundary between a standalone
+comment group and the following code. Use `false` to remove blank lines there,
+`true` to require one, or `preserve` (the default) to retain existing spacing.
+All supplied profiles use `false` to keep comments with the code they describe.
+If the following keyword requests a blank line, the usual precedence applies:
+`false` wins over `true`. This setting does not affect trailing or inline comments,
+gaps between comment-only lines, or text inside multiline comments.
+
+```iecst
+Prepare();
+
+// Start the next operation.
+(* Both comment styles stay together. *)
+Run();
+```
+
+Consecutive standalone comments form one group, including mixed comment styles
+and multiline block comments. The setting does not insert gaps between those
+comments, change text inside them, add a leading blank line at the start of a
+file, or separate trailing and inline comments from their code. Existing gaps
+between comment-only lines are preserved, subject to the global blank-line limit.
+
+Existing block-boundary rules still take precedence: for example, no blank
+line is inserted immediately after `VAR`, `METHOD`, or `ELSE`, or after `THEN`
+when its after-header setting is `false`. The maximum consecutive blank-line
+count also applies; setting it to `0` suppresses all blank lines.
+
 ## Alignment preferences
 
 The variant without assignment alignment changes only these settings from the
@@ -376,8 +421,9 @@ tc_format_align_declarations = false
 
 It retains blank lines and hanging argument indentation while avoiding padding
 before declaration `:`, assignment `:=`, and named parameter `:=` / `=>`
-operators. Direct-address and trailing-comment alignment remain enabled;
-disable their separate settings if you also want to remove that padding.
+operators. Disabling declaration alignment also disables column padding around
+`AT` declarations. Trailing-comment alignment remains enabled; disable its
+separate setting if you also want to remove that padding.
 For example:
 
 ```iecst
@@ -386,6 +432,23 @@ IF ready THEN
     requestedPosition := targetPosition;
 
 END_IF
+```
+
+`tc_format_align_declarations` controls variable column alignment, including
+directly addressed variables. When it is `false`, declarations use ordinary
+spacing, such as `input AT %I* : BOOL;`. When it is `true`, declaration colons
+align and `tc_format_align_addresses = true` also aligns the `AT` keywords.
+Set `tc_format_align_addresses = false` to align colons without aligning `AT`.
+
+Comment-only `//` lines follow their surrounding block's indentation. The gap
+between code and a trailing `//` is controlled by
+`tc_format_spaces_before_end_of_line_comment` (default `1`). Comment alignment
+can add padding to this gap; disabling alignment retains the configured gap.
+For example, to keep two spaces before trailing comments without aligning them:
+
+```ini
+tc_format_spaces_before_end_of_line_comment = 2
+tc_format_align_end_of_line_comments = false
 ```
 
 ## Expanded multiline arguments

@@ -134,8 +134,12 @@ internal static class BlankLineNormalizer
             return BlankLinePolicy.Remove;
         }
 
-        var after = GetFollowingBlankLinePolicy(previous, options);
-        var before = GetPrecedingBlankLinePolicy(next, options);
+        var after = previous?.IsCommentOnly == true && next is { IsCommentOnly: false, IsBlank: false }
+            ? options.AfterComment
+            : GetFollowingBlankLinePolicy(previous, options);
+        var before = next?.IsCommentOnly == true && previous?.IsCommentOnly != true
+            ? options.BeforeComment
+            : GetPrecedingBlankLinePolicy(next, options);
         if (after == BlankLinePolicy.Remove || before == BlankLinePolicy.Remove)
         {
             return BlankLinePolicy.Remove;
@@ -535,6 +539,9 @@ internal static class BlankLineNormalizer
     private sealed record TokenLine(IReadOnlyList<SyntaxToken> Tokens, SyntaxToken? NewLine)
     {
         public bool IsBlank => Tokens.All(token => token.Kind == SyntaxKind.Whitespace);
+
+        public bool IsCommentOnly => !IsBlank && Tokens.All(token =>
+            token.Kind is SyntaxKind.Whitespace or SyntaxKind.LineComment or SyntaxKind.BlockComment);
 
         public ControlFlowBlock ElseContext { get; init; }
 

@@ -86,7 +86,9 @@ public sealed record BlankLineOptions(
     BlankLinePolicy BeforeUntil = BlankLinePolicy.Preserve,
     BlankLinePolicy BeforeEndLoop = BlankLinePolicy.Preserve,
     BlankLinePolicy AfterControlFlowBlock = BlankLinePolicy.Preserve,
-    BlankLinePolicy AfterMultilineCall = BlankLinePolicy.Preserve);
+    BlankLinePolicy AfterMultilineCall = BlankLinePolicy.Preserve,
+    BlankLinePolicy BeforeComment = BlankLinePolicy.Preserve,
+    BlankLinePolicy AfterComment = BlankLinePolicy.Preserve);
 
 public sealed record AlignmentOptions(
     bool Declarations,
@@ -220,6 +222,8 @@ public sealed record FormatterOptions(
         ValidateBlankLinePolicy(BlankLines.BeforeEndLoop, nameof(BlankLines.BeforeEndLoop), errors);
         ValidateBlankLinePolicy(BlankLines.AfterControlFlowBlock, nameof(BlankLines.AfterControlFlowBlock), errors);
         ValidateBlankLinePolicy(BlankLines.AfterMultilineCall, nameof(BlankLines.AfterMultilineCall), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeComment, nameof(BlankLines.BeforeComment), errors);
+        ValidateBlankLinePolicy(BlankLines.AfterComment, nameof(BlankLines.AfterComment), errors);
 
         RequirePositive(Indentation.Size, nameof(Indentation.Size), errors);
         RequirePositive(Indentation.TabWidth, nameof(Indentation.TabWidth), errors);
