@@ -166,8 +166,10 @@ around operators, and no column padding. Declaration and return-type colons
 have one space on each side (`value : BOOL`), including before an enum's opening
 parenthesis (`TYPE E_Mode : (`). CASE labels stay compact (`1:`). C# settings
 are not read by the Structured Text formatter; this profile selects its own
-equivalent options. Existing multiline assignments indent each continuation,
-including `AND` and `OR` expressions without surrounding parentheses.
+equivalent options. Multiline assignments align continuations beneath an
+expression that starts beside `:=`; expressions starting on the next line use
+one continuation indent. All profiles separate multiline assignments from
+surrounding statements with one blank line, subject to block-boundary rules.
 
 [Use this profile](../examples/less-whitespace.editorconfig)
 
@@ -176,6 +178,7 @@ VAR
     i : INT := 0;
     targetPosition : LREAL := 100;
 END_VAR
+
 positions := [
     0,
     100];
@@ -202,6 +205,7 @@ VAR
     i              : INT   := 0;
     targetPosition : LREAL := 100;
 END_VAR
+
 positions := [
     0,
     100
@@ -237,6 +241,7 @@ VAR
     i : INT := 0;
     targetPosition : LREAL := 100;
 END_VAR
+
 positions := [
     0,
     100
@@ -459,6 +464,49 @@ For example, to keep two spaces before trailing comments without aligning them:
 tc_format_spaces_before_end_of_line_comment = 2
 tc_format_align_end_of_line_comments = false
 ```
+
+## Multiline assignments
+
+Assignment continuations align beneath the first right-hand expression by
+default. This is independent of column alignment between separate statements:
+
+```iecst
+equipmentModulesAreStopped := NOT _clampingBeam.Busy AND
+                              NOT _runner.Busy AND
+                              NOT _backgauge.Busy;
+```
+
+When the right-hand expression starts on the next line, it uses
+`tc_format_continuation_indent_size` instead:
+
+```iecst
+equipmentModulesAreStopped :=
+    NOT _clampingBeam.Busy AND
+    NOT _runner.Busy AND
+    NOT _backgauge.Busy;
+```
+
+Set `tc_format_align_assignment_continuations = false` to use ordinary
+continuation indentation for both layouts. Calls and initializers retain their
+delimiter layout settings. Declaration initializers and named arguments are
+excluded from this assignment alignment rule.
+
+All three example profiles also select:
+
+```ini
+tc_format_blank_line_before_multiline_assignment = true
+tc_format_blank_line_after_multiline_assignment = true
+```
+
+Each option accepts `true`, `false`, or `preserve`, with a built-in default of
+`preserve`. The rules use the final formatted line count, including assignments
+expanded by wrapping. They add no separators between single-line assignments;
+existing blank lines between those statements remain available for intentional
+grouping. Continuation lines stay together, including intervening comments.
+Block and comment boundary removal policies take precedence, and the global
+maximum blank-line count still applies. No leading or trailing separator is
+added at a code region's edges. These rules apply to standalone assignments,
+including `REF=` and `?=`, rather than declaration initializers or named arguments.
 
 ## Expanded multiline arguments
 

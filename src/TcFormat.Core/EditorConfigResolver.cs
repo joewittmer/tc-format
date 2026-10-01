@@ -250,6 +250,16 @@ public sealed class EditorConfigResolver
                     "tc_format_blank_line_after_comment",
                     defaults.BlankLines.AfterComment,
                     values,
+                    diagnostics),
+                BeforeMultilineAssignment: ReadBlankLinePolicy(
+                    "tc_format_blank_line_before_multiline_assignment",
+                    defaults.BlankLines.BeforeMultilineAssignment,
+                    values,
+                    diagnostics),
+                AfterMultilineAssignment: ReadBlankLinePolicy(
+                    "tc_format_blank_line_after_multiline_assignment",
+                    defaults.BlankLines.AfterMultilineAssignment,
+                    values,
                     diagnostics)),
             Alignment: new AlignmentOptions(
                 Declarations: ReadBoolean(
@@ -285,6 +295,11 @@ public sealed class EditorConfigResolver
                 EndOfLineComments: ReadBoolean(
                     "tc_format_align_end_of_line_comments",
                     defaults.Alignment.EndOfLineComments,
+                    values,
+                    diagnostics),
+                AssignmentContinuations: ReadBoolean(
+                    "tc_format_align_assignment_continuations",
+                    defaults.Alignment.AssignmentContinuations,
                     values,
                     diagnostics)),
             Wrapping: new WrappingOptions(

@@ -88,7 +88,7 @@ public sealed class AssignmentContinuationTests
 
     private static FormatterOptions Options => FormatterOptions.Default with
     {
-        Alignment = new AlignmentOptions(false, false, false, false, false, false, false),
+        Alignment = new AlignmentOptions(false, false, false, false, false, false, false, AssignmentContinuations: false),
         Wrapping = FormatterOptions.Default.Wrapping with
         {
             Calls = WrapStyle.Preserve,

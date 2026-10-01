@@ -220,6 +220,18 @@ tc_format_blank_line_before_comment = false
 # Consecutive comments and the text inside block comments are unchanged.
 tc_format_blank_line_after_comment = false
 
+# Blank line before a standalone assignment spanning multiple formatted lines.
+# Declaration initializers and named arguments are excluded. Block-boundary
+# removal rules take precedence; single-line assignments are unaffected.
+# Options: true, false, preserve
+# Default: preserve
+tc_format_blank_line_before_multiline_assignment = true
+
+# Blank line after a standalone assignment spanning multiple formatted lines.
+# Options: true, false, preserve
+# Default: preserve
+tc_format_blank_line_after_multiline_assignment = true
+
 # Vertical alignment
 # Alignment applies to short, compatible groups and is skipped for the entire
 # group if padding would exceed an active max_line_length.
@@ -239,6 +251,13 @@ tc_format_align_declaration_initializers = false
 # Options: true, false
 # Default: true
 tc_format_align_assignments = false
+
+# Align assignment continuation lines under a right-hand expression that starts
+# beside :=, REF=, or ?=. When the expression starts on the next line, use the
+# continuation indent size. This does not align operators across statements.
+# Options: true, false
+# Default: true
+tc_format_align_assignment_continuations = true
 
 # Align named input := operators within a multiline call.
 # Options: true, false

@@ -1041,9 +1041,9 @@ public sealed class StructuredTextFormatterTests
 
     [Theory]
     [InlineData(BinaryOperatorPosition.After,
-        "result := firstCondition AND\r\n    secondCondition OR\r\n    thirdCondition;\r\n")]
+        "result := firstCondition AND\r\n          secondCondition OR\r\n          thirdCondition;\r\n")]
     [InlineData(BinaryOperatorPosition.Before,
-        "result := firstCondition\r\n    AND secondCondition\r\n    OR thirdCondition;\r\n")]
+        "result := firstCondition\r\n          AND secondCondition\r\n          OR thirdCondition;\r\n")]
     public void WrapsLongBinaryExpressionsAtConfiguredOperatorPosition(
         BinaryOperatorPosition position,
         string expected)
@@ -1164,7 +1164,7 @@ public sealed class StructuredTextFormatterTests
         var result = StructuredTextFormatter.Format("result := firstValue + secondValue;", options);
 
         Assert.True(result.IsValid);
-        Assert.Equal("result := firstValue\r\n    + secondValue;\r\n", result.FormattedText);
+        Assert.Equal("result := firstValue\r\n          + secondValue;\r\n", result.FormattedText);
     }
 
     [Fact]

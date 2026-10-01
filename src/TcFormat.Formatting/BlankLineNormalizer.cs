@@ -7,12 +7,19 @@ internal static class BlankLineNormalizer
 {
     public static IReadOnlyList<SyntaxToken> Apply(
         IReadOnlyList<SyntaxToken> tokens,
-        FormatterOptions options)
+        FormatterOptions options,
+        bool includeMultilineAssignments = true)
     {
         var lines = AnnotateControlHeaders(AnnotateContexts(SplitLines(tokens)));
         if (options.BlankLines.AfterMultilineCall != BlankLinePolicy.Preserve)
         {
             lines = AnnotateMultilineCalls(lines);
+        }
+        if (includeMultilineAssignments &&
+            (options.BlankLines.BeforeMultilineAssignment != BlankLinePolicy.Preserve ||
+             options.BlankLines.AfterMultilineAssignment != BlankLinePolicy.Preserve))
+        {
+            lines = AnnotateMultilineAssignments(lines, tokens);
         }
 
         var withoutForbiddenBlankLines = RemoveForbiddenBlankLines(lines, options.BlankLines);
@@ -129,6 +136,11 @@ internal static class BlankLineNormalizer
         TokenLine? next,
         BlankLineOptions options)
     {
+        if (previous?.AssignmentStart is not null && previous.AssignmentStart == next?.AssignmentStart)
+        {
+            return BlankLinePolicy.Remove;
+        }
+
         if (RemovesFollowingBlankLines(previous))
         {
             return BlankLinePolicy.Remove;
@@ -158,6 +170,11 @@ internal static class BlankLineNormalizer
         TokenLine? line,
         BlankLineOptions options)
     {
+        if (line?.EndsMultilineAssignment == true)
+        {
+            return options.AfterMultilineAssignment;
+        }
+
         if (line?.EndsMultilineCall == true)
         {
             return options.AfterMultilineCall;
@@ -198,6 +215,11 @@ internal static class BlankLineNormalizer
         TokenLine? line,
         BlankLineOptions options)
     {
+        if (line?.StartsMultilineAssignment == true)
+        {
+            return options.BeforeMultilineAssignment;
+        }
+
         if (line?.IsCaseLabel == true)
         {
             return options.BeforeCaseLabel;
@@ -275,6 +297,28 @@ internal static class BlankLineNormalizer
             }
         }
 
+        return output;
+    }
+
+    private static IReadOnlyList<TokenLine> AnnotateMultilineAssignments(
+        IReadOnlyList<TokenLine> lines, IReadOnlyList<SyntaxToken> tokens)
+    {
+        var output = lines.ToArray();
+        foreach (var assignment in MultilineAssignments.Find(tokens))
+        {
+            var first = output[assignment.StartLine].Tokens.FirstOrDefault(token => !token.IsTrivia);
+            var last = output[assignment.EndLine].Tokens.LastOrDefault(token => !token.IsTrivia);
+            if (!ReferenceEquals(first, tokens[assignment.Start]) || !ReferenceEquals(last, tokens[assignment.End]))
+            {
+                continue;
+            }
+            output[assignment.StartLine] = output[assignment.StartLine] with { StartsMultilineAssignment = true };
+            output[assignment.EndLine] = output[assignment.EndLine] with { EndsMultilineAssignment = true };
+            for (var index = assignment.StartLine; index <= assignment.EndLine; index++)
+            {
+                output[index] = output[index] with { AssignmentStart = assignment.Start };
+            }
+        }
         return output;
     }
 
@@ -548,6 +592,9 @@ internal static class BlankLineNormalizer
         public bool IsCaseLabel { get; init; }
 
         public bool EndsMultilineCall { get; init; }
+        public bool StartsMultilineAssignment { get; init; }
+        public bool EndsMultilineAssignment { get; init; }
+        public int? AssignmentStart { get; init; }
 
         public string? CompletedHeader { get; init; }
 

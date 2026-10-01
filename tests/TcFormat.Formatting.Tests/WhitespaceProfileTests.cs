@@ -31,7 +31,7 @@ public sealed class WhitespaceProfileTests
         AssertProfileOutput(profile, "stationary := master.Stopped AND NOT master.Busy\n" +
             "AND master.InSync\nAND ABS(master.SetVelo) <= 0.000001;\nRun();",
             "stationary := master.Stopped AND NOT master.Busy\r\n" +
-            "    AND master.InSync\r\n    AND ABS(master.SetVelo) <= 0.000001;\r\nRun();\r\n");
+            "              AND master.InSync\r\n              AND ABS(master.SetVelo) <= 0.000001;\r\n\r\nRun();\r\n");
     }
 
     [Theory]

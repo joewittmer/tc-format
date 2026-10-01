@@ -88,7 +88,9 @@ public sealed record BlankLineOptions(
     BlankLinePolicy AfterControlFlowBlock = BlankLinePolicy.Preserve,
     BlankLinePolicy AfterMultilineCall = BlankLinePolicy.Preserve,
     BlankLinePolicy BeforeComment = BlankLinePolicy.Preserve,
-    BlankLinePolicy AfterComment = BlankLinePolicy.Preserve);
+    BlankLinePolicy AfterComment = BlankLinePolicy.Preserve,
+    BlankLinePolicy BeforeMultilineAssignment = BlankLinePolicy.Preserve,
+    BlankLinePolicy AfterMultilineAssignment = BlankLinePolicy.Preserve);
 
 public sealed record AlignmentOptions(
     bool Declarations,
@@ -97,7 +99,8 @@ public sealed record AlignmentOptions(
     bool NamedInputs,
     bool NamedOutputs,
     bool Addresses,
-    bool EndOfLineComments);
+    bool EndOfLineComments,
+    bool AssignmentContinuations = true);
 
 public sealed record WrappingOptions(
     WrapStyle Calls,
@@ -222,6 +225,8 @@ public sealed record FormatterOptions(
         ValidateBlankLinePolicy(BlankLines.BeforeEndLoop, nameof(BlankLines.BeforeEndLoop), errors);
         ValidateBlankLinePolicy(BlankLines.AfterControlFlowBlock, nameof(BlankLines.AfterControlFlowBlock), errors);
         ValidateBlankLinePolicy(BlankLines.AfterMultilineCall, nameof(BlankLines.AfterMultilineCall), errors);
+        ValidateBlankLinePolicy(BlankLines.BeforeMultilineAssignment, nameof(BlankLines.BeforeMultilineAssignment), errors);
+        ValidateBlankLinePolicy(BlankLines.AfterMultilineAssignment, nameof(BlankLines.AfterMultilineAssignment), errors);
         ValidateBlankLinePolicy(BlankLines.BeforeComment, nameof(BlankLines.BeforeComment), errors);
         ValidateBlankLinePolicy(BlankLines.AfterComment, nameof(BlankLines.AfterComment), errors);
 

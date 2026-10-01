@@ -34,7 +34,7 @@ public static class StructuredTextFormatter
         }
 
         var statements = StatementSplitter.Apply(original.Tokens, options);
-        var blankLines = BlankLineNormalizer.Apply(statements, options);
+        var blankLines = BlankLineNormalizer.Apply(statements, options, includeMultilineAssignments: false);
         var indented = StructuralIndenter.Apply(blankLines, options);
         if (indented.Diagnostics.Count > 0)
         {
@@ -47,7 +47,8 @@ public static class StructuredTextFormatter
         var layoutSeparated = BlankLineNormalizer.Apply(wrapped, options);
         var aligned = VerticalAligner.Apply(layoutSeparated, options);
         var hangingAligned = LineWrapper.AlignHangingContinuations(aligned, options);
-        var formattedText = Render(hangingAligned, options);
+        var assignmentAligned = MultilineAssignments.Align(hangingAligned, options);
+        var formattedText = Render(assignmentAligned, options);
         var formatted = StructuredTextLexer.Lex(formattedText);
         if (!formatted.IsValid)
         {
