@@ -6,6 +6,17 @@ namespace TcFormat.Formatting.Tests;
 
 public sealed class ClosingDelimiterTests
 {
+    [Fact]
+    public void HangingCallClosingsStayAtTheirOpeningLineIndentInContinuedAssignments()
+    {
+        var options = Options(ClosingDelimiterStyle.OwnLine) with
+        {
+            Wrapping = Options(ClosingDelimiterStyle.OwnLine).Wrapping with { Calls = WrapStyle.Hanging }
+        };
+        AssertFormatted("value :=\nCall(a,\nb) OR\nCall(c,\nd);",
+            "value :=\r\n    Call(a,\r\n         b\r\n    ) OR\r\n    Call(c,\r\n         d\r\n    );\r\n", options);
+    }
+
     [Theory]
     [InlineData(ClosingDelimiterStyle.OwnLine, "\r\n")]
     [InlineData(ClosingDelimiterStyle.SameLine, "")]

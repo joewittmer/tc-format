@@ -292,7 +292,7 @@ internal static class LineWrapper
                 rootIndentation = indentation;
             }
 
-            if (start < line.End && !line.ContainsMultilineToken && scopes.Any(scope => scope.Indented))
+            if (start < line.End && !line.ContainsMultilineToken && scopes.Any(scope => scope.Indented || scope.HangingIndentation is not null))
             {
                 var parent = scopes.Last(scope => scope.Indented || scope.HangingIndentation is not null);
                 indentation = parent.HangingIndentation ??
@@ -312,7 +312,7 @@ internal static class LineWrapper
                         break;
                     }
 
-                    if (scopes[closingScope].Indented)
+                    if (scopes[closingScope].Indented || scopes[closingScope].HangingIndentation is not null)
                     {
                         indentation = scopes[closingScope].Indentation;
                     }

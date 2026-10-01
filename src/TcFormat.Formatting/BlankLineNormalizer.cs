@@ -8,18 +8,23 @@ internal static class BlankLineNormalizer
     public static IReadOnlyList<SyntaxToken> Apply(
         IReadOnlyList<SyntaxToken> tokens,
         FormatterOptions options,
-        bool includeMultilineAssignments = true)
+        bool includeMultilineStatements = true)
     {
         var lines = AnnotateControlHeaders(AnnotateContexts(SplitLines(tokens)));
-        if (options.BlankLines.AfterMultilineCall != BlankLinePolicy.Preserve)
+        var generalStatementSpacing = options.BlankLines.AroundMultilineStatements != BlankLinePolicy.Preserve;
+        if (!generalStatementSpacing && options.BlankLines.AfterMultilineCall != BlankLinePolicy.Preserve)
         {
             lines = AnnotateMultilineCalls(lines);
         }
-        if (includeMultilineAssignments &&
+        if (includeMultilineStatements && !generalStatementSpacing &&
             (options.BlankLines.BeforeMultilineAssignment != BlankLinePolicy.Preserve ||
              options.BlankLines.AfterMultilineAssignment != BlankLinePolicy.Preserve))
         {
             lines = AnnotateMultilineAssignments(lines, tokens);
+        }
+        if (includeMultilineStatements && generalStatementSpacing)
+        {
+            lines = AnnotateStatements(lines);
         }
 
         var withoutForbiddenBlankLines = RemoveForbiddenBlankLines(lines, options.BlankLines);
@@ -136,6 +141,11 @@ internal static class BlankLineNormalizer
         TokenLine? next,
         BlankLineOptions options)
     {
+        if (previous?.StatementStart is not null && previous.StatementStart == next?.StatementStart)
+        {
+            return BlankLinePolicy.Remove;
+        }
+
         if (previous?.AssignmentStart is not null && previous.AssignmentStart == next?.AssignmentStart)
         {
             return BlankLinePolicy.Remove;
@@ -146,10 +156,12 @@ internal static class BlankLineNormalizer
             return BlankLinePolicy.Remove;
         }
 
-        var after = previous?.IsCommentOnly == true && next is { IsCommentOnly: false, IsBlank: false }
+        var statementBoundary = previous?.StatementStart is not null && next?.StatementStart is not null &&
+            (previous.IsMultilineStatement || next.IsMultilineStatement);
+        var after = !statementBoundary && previous?.IsCommentOnly == true && next is { IsCommentOnly: false, IsBlank: false }
             ? options.AfterComment
             : GetFollowingBlankLinePolicy(previous, options);
-        var before = next?.IsCommentOnly == true && previous?.IsCommentOnly != true
+        var before = !statementBoundary && next?.IsCommentOnly == true && previous?.IsCommentOnly != true
             ? options.BeforeComment
             : GetPrecedingBlankLinePolicy(next, options);
         if (after == BlankLinePolicy.Remove || before == BlankLinePolicy.Remove)
@@ -160,6 +172,11 @@ internal static class BlankLineNormalizer
         if (after == BlankLinePolicy.Require || before == BlankLinePolicy.Require)
         {
             return BlankLinePolicy.Require;
+        }
+
+        if (statementBoundary)
+        {
+            return options.AroundMultilineStatements;
         }
 
         // A short header stays tight unless the following block requires a separator.
@@ -297,6 +314,80 @@ internal static class BlankLineNormalizer
             }
         }
 
+        return output;
+    }
+
+    private static IReadOnlyList<TokenLine> AnnotateStatements(IReadOnlyList<TokenLine> lines)
+    {
+        var output = lines.ToArray();
+        var start = -1;
+        var depth = 0;
+        string? terminator = null;
+        for (var lineIndex = 0; lineIndex < output.Length; lineIndex++)
+        {
+            var significant = output[lineIndex].Tokens.Where(token => !token.IsTrivia && token.Kind != SyntaxKind.Pragma).ToArray();
+            if (significant.Length == 0)
+            {
+                continue;
+            }
+            if (depth == 0 && output[lineIndex].IsCaseLabel)
+            {
+                start = -1;
+                continue;
+            }
+
+            for (var index = 0; index < significant.Length; index++)
+            {
+                var token = significant[index];
+                var keyword = token.Kind == SyntaxKind.Keyword ? token.Text.ToUpperInvariant() : null;
+                if (depth == 0 && (keyword is "STRUCT" or "UNION" ||
+                    keyword?.StartsWith("END_", StringComparison.Ordinal) == true))
+                {
+                    start = -1;
+                    terminator = null;
+                }
+                if (start < 0 && depth == 0 && index == 0)
+                {
+                    terminator = keyword switch
+                    {
+                        "IF" or "ELSIF" => "THEN",
+                        "FOR" or "WHILE" => "DO",
+                        "CASE" => "OF",
+                        _ => null
+                    };
+                    if (terminator is not null || token.Kind is SyntaxKind.Identifier or SyntaxKind.DirectAddress ||
+                        keyword is "TYPE" or "THIS" or "SUPER" or "RETURN" or "EXIT" or "CONTINUE")
+                    {
+                        start = lineIndex;
+                    }
+                }
+                depth += token.Text switch { "(" or "[" => 1, ")" or "]" => -1, _ => 0 };
+                if (depth == 0 && (token.Text == ";" || terminator is not null && keyword == terminator))
+                {
+                    if (start >= 0 && index == significant.Length - 1)
+                    {
+                        var multiline = lineIndex > start;
+                        var attachedStart = start;
+                        while (attachedStart > 0 && output[attachedStart - 1].IsCommentOnly)
+                        {
+                            attachedStart--;
+                        }
+                        var boundaryKeyword = FirstKeyword(output[start]);
+                        for (var line = attachedStart; line <= lineIndex; line++)
+                        {
+                            output[line] = output[line] with
+                            {
+                                StatementStart = start,
+                                IsMultilineStatement = multiline,
+                                BoundaryKeyword = line == attachedStart ? boundaryKeyword : null
+                            };
+                        }
+                    }
+                    start = -1;
+                    terminator = null;
+                }
+            }
+        }
         return output;
     }
 
@@ -541,6 +632,11 @@ internal static class BlankLineNormalizer
             return null;
         }
 
+        if (line.BoundaryKeyword is not null)
+        {
+            return line.BoundaryKeyword;
+        }
+
         foreach (var token in line.Tokens)
         {
             if (token.Kind == SyntaxKind.Whitespace)
@@ -595,6 +691,9 @@ internal static class BlankLineNormalizer
         public bool StartsMultilineAssignment { get; init; }
         public bool EndsMultilineAssignment { get; init; }
         public int? AssignmentStart { get; init; }
+        public int? StatementStart { get; init; }
+        public bool IsMultilineStatement { get; init; }
+        public string? BoundaryKeyword { get; init; }
 
         public string? CompletedHeader { get; init; }
 

@@ -260,6 +260,11 @@ public sealed class EditorConfigResolver
                     "tc_format_blank_line_after_multiline_assignment",
                     defaults.BlankLines.AfterMultilineAssignment,
                     values,
+                    diagnostics),
+                AroundMultilineStatements: ReadBlankLinePolicy(
+                    "tc_format_blank_line_around_multiline_statements",
+                    defaults.BlankLines.AroundMultilineStatements,
+                    values,
                     diagnostics)),
             Alignment: new AlignmentOptions(
                 Declarations: ReadBoolean(
@@ -345,7 +350,12 @@ public sealed class EditorConfigResolver
                     diagnostics,
                     ("preserve", ClosingDelimiterStyle.Preserve),
                     ("own_line", ClosingDelimiterStyle.OwnLine),
-                    ("same_line", ClosingDelimiterStyle.SameLine))),
+                    ("same_line", ClosingDelimiterStyle.SameLine)),
+                CompactControlFlowHeaders: ReadBoolean(
+                    "tc_format_compact_control_flow_headers",
+                    defaults.Wrapping.CompactControlFlowHeaders,
+                    values,
+                    diagnostics)),
             Spacing: new SpacingOptions(
                 BeforeDeclarationColon: ReadBoolean(
                     "tc_format_space_before_declaration_colon",

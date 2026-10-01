@@ -45,6 +45,7 @@ public sealed class FormatterOptionsTests
         Assert.Equal(BlankLinePolicy.Preserve, defaults.AfterMultilineCall);
         Assert.Equal(BlankLinePolicy.Preserve, defaults.BeforeMultilineAssignment);
         Assert.Equal(BlankLinePolicy.Preserve, defaults.AfterMultilineAssignment);
+        Assert.Equal(BlankLinePolicy.Preserve, defaults.AroundMultilineStatements);
         var invalid = FormatterOptions.Default with
         {
             BlankLines = defaults with
@@ -56,11 +57,12 @@ public sealed class FormatterOptionsTests
                 AfterControlFlowBlock = (BlankLinePolicy)999,
                 AfterMultilineCall = (BlankLinePolicy)999,
                 BeforeMultilineAssignment = (BlankLinePolicy)999,
-                AfterMultilineAssignment = (BlankLinePolicy)999
+                AfterMultilineAssignment = (BlankLinePolicy)999,
+                AroundMultilineStatements = (BlankLinePolicy)999
             }
         };
 
-        Assert.Equal(8, invalid.Validate().Count);
+        Assert.Equal(9, invalid.Validate().Count);
     }
 
     [Fact]

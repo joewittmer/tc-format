@@ -15,8 +15,8 @@ public sealed class WhitespaceProfileTests
                               "Move(Position := target,\nv := speed);\nRead(Position => target,\nv => speed);";
         const string expected = "VAR\r\n    short : INT := 1;\r\n    longName : LREAL := 2;\r\n" +
                                 "    x AT %I* : BOOL;\r\n    longInput AT %IX0.0 : BOOL;\r\nEND_VAR\r\n" +
-                                "x := 1; // first\r\nlongName := 2; // second\r\n" +
-                                "Move(Position := target,\r\n     v := speed);\r\n" +
+                                "x := 1; // first\r\nlongName := 2; // second\r\n\r\n" +
+                                "Move(Position := target,\r\n     v := speed);\r\n\r\n" +
                                 "Read(Position => target,\r\n     v => speed);\r\n";
 
         AssertProfileOutput("less-whitespace", source, expected);
@@ -134,13 +134,13 @@ public sealed class WhitespaceProfileTests
     }
 
     [Theory]
-    [InlineData("less-whitespace", "\r\n")]
+    [InlineData("less-whitespace", "\r\n\r\n")]
     [InlineData("more-whitespace", "\r\n\r\n")]
     public void ProfilesSeparateMultilineCallsAndKeepShortCallsTogether(string profile, string gap)
     {
         const string source = "_axis.Enable();\n_axis.Reset();\n_axis.Move(100,\n20);\ncompleted := FALSE;";
         var closingGap = profile == "more-whitespace" ? "\r\n" : "";
-        var expected = "_axis.Enable();\r\n_axis.Reset();\r\n_axis.Move(100,\r\n           20" + closingGap + ");" +
+        var expected = "_axis.Enable();\r\n_axis.Reset();\r\n\r\n_axis.Move(100,\r\n           20" + closingGap + ");" +
                        gap + "completed := FALSE;\r\n";
 
         AssertProfileOutput(profile, source, expected);
@@ -194,7 +194,7 @@ public sealed class WhitespaceProfileTests
                               "Read(Position => target,\nv => speed);\nEND_IF";
         var declarationPadding = profile == "more-whitespace" ? "   " : "";
         var expected = "VAR\r\n    short " + declarationPadding + ": INT " + initializerPadding + ":= 1;\r\n    longName : LREAL := 2;\r\nEND_VAR\r\n\r\n" +
-                       "IF ready THEN\r\n    x " + assignmentPadding + ":= 1;\r\n    longName := 2;\r\n" +
+                       "IF ready THEN\r\n    x " + assignmentPadding + ":= 1;\r\n    longName := 2;\r\n\r\n" +
                        "    Move(Position := target,\r\n         v " + inputPadding + ":= speed\r\n    );\r\n\r\n" +
                        "    Read(Position => target,\r\n         v " + inputPadding + "=> speed\r\n    );\r\n\r\nEND_IF\r\n";
 

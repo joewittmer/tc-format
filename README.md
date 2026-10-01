@@ -25,6 +25,10 @@ includes comments explaining every setting.
 To customize the style, follow the [configuration walkthrough](docs/configuration.md#build-your-own-configuration)
 and edit the annotated settings in your `.editorconfig`.
 
+All profiles separate multiline statements and declarations (including array
+initializers) from their neighbors with one blank line. Multiline control-flow
+headers keep parentheses and `THEN` / `DO` / `OF` attached to their expressions.
+
 ### 3. Add it to your project
 
 Place `.editorconfig` in the folder containing your PLC project (`.plcproj`),

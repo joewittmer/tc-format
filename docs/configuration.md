@@ -151,8 +151,10 @@ below explain the layouts and interactions in more detail.
 ## Profile examples
 
 All three profiles use four-space indentation, hanging call alignment, and
-`always` initializer wrapping. They retain up to one manually inserted blank
-line between ordinary statements.
+`always` initializer wrapping. They separate multiline statements and
+declarations from their neighbors with one blank line and use compact multiline
+control-flow headers. They retain up to one manually inserted blank line between
+single-line statements.
 
 The examples below format the **same code** with each profile. Compare the variable declarations, assignments, blank lines, and closing delimiters.
 
@@ -168,8 +170,8 @@ parenthesis (`TYPE E_Mode : (`). CASE labels stay compact (`1:`). C# settings
 are not read by the Structured Text formatter; this profile selects its own
 equivalent options. Multiline assignments align continuations beneath an
 expression that starts beside `:=`; expressions starting on the next line use
-one continuation indent. All profiles separate multiline assignments from
-surrounding statements with one blank line, subject to block-boundary rules.
+one continuation indent. All profiles separate multiline statements and
+declarations from their neighbors, subject to block-boundary rules.
 
 [Use this profile](../examples/less-whitespace.editorconfig)
 
@@ -186,6 +188,7 @@ IF ready THEN
     FOR i := 0 TO 1 DO
         _axis.Move(Position := positions[i],
                    Velocity := 20);
+
         moving := TRUE;
         requestedPosition := targetPosition;
     END_FOR
@@ -353,11 +356,46 @@ The existing `true`, `false`, and `preserve` values also apply when `THEN` or
 header settings. `CASE` uses the case-label spacing options; `UNTIL` introduces
 a repeat loop's termination condition rather than a following body.
 
+All profiles enable the shared statement rule:
+
+```ini
+tc_format_blank_line_around_multiline_statements = true
+```
+
+Between neighboring statements or declarations, this adds one blank line if
+either spans multiple lines in the final formatted output. It covers array and
+structure initializers, assignments, and standalone calls. Consecutive single-line
+statements do not gain separators; existing intentional gaps remain available.
+Array entries, arguments, and expression continuations stay together. For example:
+
+```iecst
+VAR
+    count : INT;
+
+    names : ARRAY[0..1] OF STRING(80) := [
+        'Wedge Axis 1',
+        'Wedge Axis 2'];
+
+    ready : BOOL;
+END_VAR
+```
+
+Leading comment groups stay with the statement they describe, with the separator
+before the comment group. Explicit block-boundary policies still take precedence:
+this rule does not force blank lines after `VAR`, `ELSE`, or a compact `THEN`, or
+before a closing block keyword. A control-flow header's own line count matters,
+not the number of lines in its body. No leading or trailing separator is added
+at a code region's edges, and the maximum blank-line count still applies.
+
+The setting accepts `true`, `false`, or `preserve` (the built-in default).
+`false` removes separators at these multiline statement boundaries. `preserve`
+leaves the older call and assignment policies in control. When this shared rule
+is enabled or disabled explicitly, it supersedes those narrower policies.
+
+For configurations using `preserve`, the older
 `tc_format_blank_line_after_multiline_call` separates a long standalone call
-from the following statement. The more-whitespace profile sets it to `true`;
-the less-whitespace profile sets it to `false`. `preserve` retains existing
-spacing and is the built-in default. Calls that become multiline through
-wrapping also qualify. Short calls remain compact:
+from the following statement. Its built-in default is `preserve`. Calls that
+become multiline through wrapping also qualify. Short calls remain compact:
 
 ```iecst
 _axis.Enable();
@@ -491,7 +529,8 @@ continuation indentation for both layouts. Calls and initializers retain their
 delimiter layout settings. Declaration initializers and named arguments are
 excluded from this assignment alignment rule.
 
-All three example profiles also select:
+For configurations that leave `tc_format_blank_line_around_multiline_statements`
+at `preserve`, these older settings control standalone assignments separately:
 
 ```ini
 tc_format_blank_line_before_multiline_assignment = true
@@ -507,6 +546,35 @@ Block and comment boundary removal policies take precedence, and the global
 maximum blank-line count still applies. No leading or trailing separator is
 added at a code region's edges. These rules apply to standalone assignments,
 including `REF=` and `?=`, rather than declaration initializers or named arguments.
+
+## Compact multiline control-flow headers
+
+All supplied profiles enable:
+
+```ini
+tc_format_compact_control_flow_headers = true
+```
+
+In multiline `IF`, `ELSIF`, `WHILE`, `FOR`, and `CASE` headers, grouping openers
+stay beside the first term, closing delimiters stay after the last term, and
+`THEN`, `DO`, or `OF` stays on the final condition line. Logical operators move
+to the preceding line, and multiline calls put their arguments below the call:
+
+```iecst
+IF NOT _clampingBeam.Busy AND
+    ( _machineMode <> E_Machine_Mode.Automatic OR
+        NOT _backgauge.IsExecuteGroupBusy(
+            area := E_Backgauge_Area.Clamps,
+            asyncCommandGroup := groupOne)) THEN
+    Run();
+END_IF
+```
+
+Short calls and single-line headers remain inline. Comments and directives can
+require separate lines; the formatter does not join across them. This option
+overrides call alignment, logical-operator position, and closing-delimiter layout
+inside multiline control-flow headers. Other statements retain their normal
+layout settings. The built-in default is `false` for existing configurations.
 
 ## Expanded multiline arguments
 
@@ -607,6 +675,8 @@ when wrapping is `preserve`. Single-line expressions stay on one line.
 directive. Ordinary inside-parenthesis and inside-bracket spacing still applies.
 The less-whitespace profile selects `same_line` for both settings. Both
 more-whitespace profiles select `own_line`. The built-in default remains `preserve`.
+Compact multiline control-flow headers override these choices within their
+headers, as described above.
 
 ## Choosing an initializer layout
 

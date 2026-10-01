@@ -90,7 +90,8 @@ public sealed record BlankLineOptions(
     BlankLinePolicy BeforeComment = BlankLinePolicy.Preserve,
     BlankLinePolicy AfterComment = BlankLinePolicy.Preserve,
     BlankLinePolicy BeforeMultilineAssignment = BlankLinePolicy.Preserve,
-    BlankLinePolicy AfterMultilineAssignment = BlankLinePolicy.Preserve);
+    BlankLinePolicy AfterMultilineAssignment = BlankLinePolicy.Preserve,
+    BlankLinePolicy AroundMultilineStatements = BlankLinePolicy.Preserve);
 
 public sealed record AlignmentOptions(
     bool Declarations,
@@ -109,7 +110,8 @@ public sealed record WrappingOptions(
     BinaryOperatorPosition BinaryOperatorPosition,
     bool ExpandMultilineArguments = false,
     ClosingDelimiterStyle MultilineClosingParenthesis = ClosingDelimiterStyle.Preserve,
-    ClosingDelimiterStyle MultilineClosingBracket = ClosingDelimiterStyle.Preserve);
+    ClosingDelimiterStyle MultilineClosingBracket = ClosingDelimiterStyle.Preserve,
+    bool CompactControlFlowHeaders = false);
 
 public sealed record SpacingOptions(
     bool BeforeDeclarationColon,
@@ -227,6 +229,7 @@ public sealed record FormatterOptions(
         ValidateBlankLinePolicy(BlankLines.AfterMultilineCall, nameof(BlankLines.AfterMultilineCall), errors);
         ValidateBlankLinePolicy(BlankLines.BeforeMultilineAssignment, nameof(BlankLines.BeforeMultilineAssignment), errors);
         ValidateBlankLinePolicy(BlankLines.AfterMultilineAssignment, nameof(BlankLines.AfterMultilineAssignment), errors);
+        ValidateBlankLinePolicy(BlankLines.AroundMultilineStatements, nameof(BlankLines.AroundMultilineStatements), errors);
         ValidateBlankLinePolicy(BlankLines.BeforeComment, nameof(BlankLines.BeforeComment), errors);
         ValidateBlankLinePolicy(BlankLines.AfterComment, nameof(BlankLines.AfterComment), errors);
 

@@ -90,6 +90,7 @@ public sealed class EditorConfigResolverTests
     [InlineData("tc_format_blank_line_after_multiline_call")]
     [InlineData("tc_format_blank_line_before_multiline_assignment")]
     [InlineData("tc_format_blank_line_after_multiline_assignment")]
+    [InlineData("tc_format_blank_line_around_multiline_statements")]
     public void RejectsMultilinePolicyOutsideControlHeaders(string key)
     {
         using var directory = new TemporaryDirectory();
@@ -120,6 +121,8 @@ public sealed class EditorConfigResolverTests
             tc_format_blank_line_after_multiline_call = {value}
             tc_format_blank_line_before_multiline_assignment = {value}
             tc_format_blank_line_after_multiline_assignment = {value}
+            tc_format_blank_line_around_multiline_statements = {value}
+            tc_format_compact_control_flow_headers = true
             tc_format_align_assignment_continuations = false
             """);
 
@@ -134,6 +137,8 @@ public sealed class EditorConfigResolverTests
         Assert.Equal(expected, result.Options.BlankLines.AfterMultilineCall);
         Assert.Equal(expected, result.Options.BlankLines.BeforeMultilineAssignment);
         Assert.Equal(expected, result.Options.BlankLines.AfterMultilineAssignment);
+        Assert.Equal(expected, result.Options.BlankLines.AroundMultilineStatements);
+        Assert.True(result.Options.Wrapping.CompactControlFlowHeaders);
         Assert.False(result.Options.Alignment.AssignmentContinuations);
     }
 

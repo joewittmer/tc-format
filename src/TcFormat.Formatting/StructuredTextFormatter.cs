@@ -34,7 +34,7 @@ public static class StructuredTextFormatter
         }
 
         var statements = StatementSplitter.Apply(original.Tokens, options);
-        var blankLines = BlankLineNormalizer.Apply(statements, options, includeMultilineAssignments: false);
+        var blankLines = BlankLineNormalizer.Apply(statements, options, includeMultilineStatements: false);
         var indented = StructuralIndenter.Apply(blankLines, options);
         if (indented.Diagnostics.Count > 0)
         {
@@ -43,12 +43,14 @@ public static class StructuredTextFormatter
 
         var spaced = TokenSpacer.Apply(indented.Tokens, options);
         var wrapped = LineWrapper.Apply(spaced, options);
+        var compact = CompactControlHeaders.Apply(wrapped, options);
         // Wrapping can turn a call or control-flow header into a multiline construct.
-        var layoutSeparated = BlankLineNormalizer.Apply(wrapped, options);
+        var layoutSeparated = BlankLineNormalizer.Apply(compact, options);
         var aligned = VerticalAligner.Apply(layoutSeparated, options);
         var hangingAligned = LineWrapper.AlignHangingContinuations(aligned, options);
         var assignmentAligned = MultilineAssignments.Align(hangingAligned, options);
-        var formattedText = Render(assignmentAligned, options);
+        var compactAligned = CompactControlHeaders.Apply(assignmentAligned, options);
+        var formattedText = Render(compactAligned, options);
         var formatted = StructuredTextLexer.Lex(formattedText);
         if (!formatted.IsValid)
         {

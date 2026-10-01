@@ -220,6 +220,14 @@ tc_format_blank_line_before_comment = false
 # Consecutive comments and the text inside block comments are unchanged.
 tc_format_blank_line_after_comment = false
 
+# Separate neighboring statements/declarations when either spans multiple lines.
+# Includes calls, assignments, arrays, and structure initializers. Comments stay
+# attached, entries stay together, and block-boundary removal rules still apply.
+# When not preserve, replaces the narrower call/assignment blank-line policies.
+# Options: true, false, preserve
+# Default: preserve
+tc_format_blank_line_around_multiline_statements = true
+
 # Blank line before a standalone assignment spanning multiple formatted lines.
 # Declaration initializers and named arguments are excluded. Block-boundary
 # removal rules take precedence; single-line assignments are unaffected.
@@ -280,6 +288,14 @@ tc_format_align_addresses = false
 tc_format_align_end_of_line_comments = false
 
 # Wrapping
+
+# Compact multiline IF/ELSIF/FOR/WHILE/CASE headers: join grouping parentheses
+# to their expressions and THEN/DO/OF to the last expression, expand multiline
+# call arguments with block indentation, and place logical operators at line ends.
+# Comments and directives prevent unsafe joining. Single-line headers stay inline.
+# Options: true, false
+# Default: false
+tc_format_compact_control_flow_headers = true
 
 # Function and function-block call wrapping.
 # Options:
