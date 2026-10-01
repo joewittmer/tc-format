@@ -7,6 +7,19 @@ namespace TcFormat.Formatting.Tests;
 public sealed class DeclarationAndCommentSpacingTests
 {
     [Theory]
+    [InlineData(true, " ")]
+    [InlineData(false, "")]
+    public void EnumOpeningParenthesisHonorsSpaceAfterDeclarationColon(bool afterColon, string gap)
+    {
+        var options = FormatterOptions.Default with
+        {
+            Spacing = FormatterOptions.Default.Spacing with { AfterDeclarationColon = afterColon }
+        };
+        AssertFormatted("TYPE E_Result :(\nNone := 0,\nDone := 1\n);\nEND_TYPE",
+            $"TYPE E_Result :{gap}(\r\n    None := 0,\r\n    Done := 1\r\n);\r\nEND_TYPE\r\n", options);
+    }
+
+    [Theory]
     [InlineData(false, false, "x AT %I* : BOOL;", "longName AT %QX0.0 : BOOL;")]
     [InlineData(false, true, "x AT %I* : BOOL;", "longName AT %QX0.0 : BOOL;")]
     [InlineData(true, false, "x AT %I*           : BOOL;", "longName AT %QX0.0 : BOOL;")]

@@ -106,7 +106,8 @@ public sealed class FormatterOptionsTests
 
         Assert.Equal("space", configuredValues["indent_style"]);
         Assert.Equal("off", configuredValues["max_line_length"]);
-        Assert.Equal("true", configuredValues["tc_format_align_end_of_line_comments"]);
+        Assert.Equal(profile.StartsWith("more", StringComparison.Ordinal) ? "true" : "false",
+            configuredValues["tc_format_align_end_of_line_comments"]);
         Assert.Equal("hanging", configuredValues["tc_format_wrap_calls"]);
         Assert.Equal("always", configuredValues["tc_format_wrap_initializers"]);
         Assert.Equal("preserve", configuredValues["tc_format_wrap_binary_expressions"]);

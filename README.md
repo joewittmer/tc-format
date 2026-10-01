@@ -18,7 +18,7 @@ includes comments explaining every setting.
 
 | Profile to copy | Style | Preview |
 | --- | --- | --- |
-| [Less whitespace](examples/less-whitespace.editorconfig) | Compact blocks, aligned columns, multiline `)` and `]` after the last item | [Example 1](docs/configuration.md#example-1-less-whitespace) |
+| [Less whitespace](examples/less-whitespace.editorconfig) | Compact blocks, single spaces without column padding, multiline `)` and `]` after the last item | [Example 1](docs/configuration.md#example-1-less-whitespace) |
 | [More whitespace](examples/more-whitespace.editorconfig) | Blank lines around blocks and after multiline calls, aligned columns, multiline `)` and `]` on their own line | [Example 2](docs/configuration.md#example-2-more-whitespace) |
 | [More whitespace without assignment alignment](examples/more-whitespace-without-assignment-alignment.editorconfig) | More whitespace, with single spaces around declaration `:`, assignment `:=`, and named parameter `:=` / `=>` operators | [Example 3](docs/configuration.md#example-3-more-whitespace-without-assignment-alignment) |
 

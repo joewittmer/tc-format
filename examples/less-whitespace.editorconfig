@@ -1,4 +1,5 @@
-# Less whitespace: keep control-flow boundaries and calls compact.
+# Less whitespace: compact blocks and single spaces, inspired by the C# style.
+# Keep one space around declaration colons and operators, without column padding.
 # Copy this file to your project root as .editorconfig.
 # Every option includes its description, accepted values, and built-in default.
 # Assigned values select this profile and can differ from the built-in defaults.
@@ -227,37 +228,37 @@ tc_format_blank_line_after_comment = false
 # Options: true, false
 # Default: true
 # Example: short    : INT; / longName : DINT;
-tc_format_align_declarations = true
+tc_format_align_declarations = false
 
 # Align := initializers in declarations.
 # Options: true, false
 # Default: true
-tc_format_align_declaration_initializers = true
+tc_format_align_declaration_initializers = false
 
 # Align top-level statement assignment operators.
 # Options: true, false
 # Default: true
-tc_format_align_assignments = true
+tc_format_align_assignments = false
 
 # Align named input := operators within a multiline call.
 # Options: true, false
 # Default: true
-tc_format_align_named_inputs = true
+tc_format_align_named_inputs = false
 
 # Align named output => operators within a multiline call.
 # Options: true, false
 # Default: true
-tc_format_align_named_outputs = true
+tc_format_align_named_outputs = false
 
 # Align AT keywords in directly addressed declarations when declaration alignment is enabled.
 # Options: true, false
 # Default: true
-tc_format_align_addresses = true
+tc_format_align_addresses = false
 
 # Align // comments on contiguous code lines with the same indentation.
 # Options: true, false
 # Default: false
-tc_format_align_end_of_line_comments = true
+tc_format_align_end_of_line_comments = false
 
 # Wrapping
 

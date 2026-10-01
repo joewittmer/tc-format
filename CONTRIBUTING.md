@@ -19,8 +19,10 @@ Roslyn-specific directory overrides and analyzer suppressions are not relevant
 to this codebase and are excluded. Roslyn's .NET Foundation file header is also
 excluded because it does not describe this project's copyright ownership. The
 Structured Text profiles in `examples/less-whitespace.editorconfig` and
-`examples/more-whitespace.editorconfig` are separate formatter configurations
-and do not inherit the C# convention.
+`examples/more-whitespace.editorconfig` are separate formatter configurations.
+The less-whitespace profile mirrors the C# convention where applicable, using
+four-space indentation and single spaces without column padding; it does not
+inherit or interpret C# EditorConfig settings.
 
 Format the solution before submitting a change:
 

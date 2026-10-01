@@ -6,6 +6,34 @@ namespace TcFormat.Formatting.Tests;
 
 public sealed class WhitespaceProfileTests
 {
+    [Fact]
+    public void LessWhitespaceUsesSingleSpacesWithoutColumnPadding()
+    {
+        const string source = "VAR\nshort : INT := 1;\nlongName : LREAL := 2;\n" +
+                              "x AT %I* : BOOL;\nlongInput AT %IX0.0 : BOOL;\nEND_VAR\n" +
+                              "x := 1; // first\nlongName := 2; // second\n" +
+                              "Move(Position := target,\nv := speed);\nRead(Position => target,\nv => speed);";
+        const string expected = "VAR\r\n    short : INT := 1;\r\n    longName : LREAL := 2;\r\n" +
+                                "    x AT %I* : BOOL;\r\n    longInput AT %IX0.0 : BOOL;\r\nEND_VAR\r\n" +
+                                "x := 1; // first\r\nlongName := 2; // second\r\n" +
+                                "Move(Position := target,\r\n     v := speed);\r\n" +
+                                "Read(Position => target,\r\n     v => speed);\r\n";
+
+        AssertProfileOutput("less-whitespace", source, expected);
+    }
+
+    [Theory]
+    [InlineData("less-whitespace")]
+    [InlineData("more-whitespace")]
+    [InlineData("more-whitespace-without-assignment-alignment")]
+    public void ProfilesIndentUnparenthesizedAssignmentContinuations(string profile)
+    {
+        AssertProfileOutput(profile, "stationary := master.Stopped AND NOT master.Busy\n" +
+            "AND master.InSync\nAND ABS(master.SetVelo) <= 0.000001;\nRun();",
+            "stationary := master.Stopped AND NOT master.Busy\r\n" +
+            "    AND master.InSync\r\n    AND ABS(master.SetVelo) <= 0.000001;\r\nRun();\r\n");
+    }
+
     [Theory]
     [InlineData("less-whitespace", false)]
     [InlineData("more-whitespace", true)]

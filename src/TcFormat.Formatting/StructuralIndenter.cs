@@ -33,6 +33,7 @@ internal static class StructuralIndenter
     {
         private readonly List<Block> blocks = [];
         private int continuationDepth;
+        private bool continuesAssignment;
         private string? headerTerminator;
         private int headerIndentationDepth;
 
@@ -43,11 +44,12 @@ internal static class StructuralIndenter
             var significant = line.Where(IsSignificant).ToArray();
             if (significant.Length == 0)
             {
-                if (line.FirstOrDefault(token => token.Kind != SyntaxKind.Whitespace)?.Kind == SyntaxKind.LineComment)
+                if (line.Any(token => token.Kind is SyntaxKind.LineComment or SyntaxKind.BlockComment) &&
+                    !line.Any(token => token.Text.AsSpan().IndexOfAny('\r', '\n') >= 0))
                 {
                     AddWithIndentation(line, output,
                         headerTerminator is not null ? headerIndentationDepth : blocks.Count,
-                        headerTerminator is not null || continuationDepth > 0);
+                        headerTerminator is not null || continuationDepth > 0 || continuesAssignment);
                     return;
                 }
 
@@ -66,7 +68,7 @@ internal static class StructuralIndenter
             var continuesHeader = headerTerminator is not null;
             var displayDepth = continuesHeader ? headerIndentationDepth : ComputeDisplayDepth(significant[0], isCaseLabel);
             var startsWithClosingDelimiter = significant[0].Text is ")" or "]";
-            var continuation = (continuesHeader || continuationDepth > 0) && !startsWithClosingDelimiter;
+            var continuation = (continuesHeader || continuationDepth > 0 || continuesAssignment) && !startsWithClosingDelimiter;
 
             if (containsMultilineToken)
             {
@@ -288,6 +290,22 @@ internal static class StructuralIndenter
         {
             foreach (var token in significant)
             {
+                // A statement can span lines without leaving a delimiter open.
+                // Named arguments inside delimiters do not start statements, and
+                // FOR assignments end at DO rather than at a semicolon.
+                if (continuationDepth == 0)
+                {
+                    if (token.Text.ToUpperInvariant() is ":=" or "REF=" or "?=")
+                    {
+                        continuesAssignment = true;
+                    }
+                    else if (token.Text == ";" ||
+                             IsKeyword(token, "THEN") || IsKeyword(token, "DO") || IsKeyword(token, "OF"))
+                    {
+                        continuesAssignment = false;
+                    }
+                }
+
                 continuationDepth += token.Text switch
                 {
                     "(" or "[" => 1,

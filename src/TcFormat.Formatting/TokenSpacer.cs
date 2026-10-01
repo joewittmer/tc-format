@@ -185,6 +185,13 @@ internal static class TokenSpacer
                 : options.Spacing.InsideBrackets ? 1 : 0;
         }
 
+        if (previous.Token.Text == ":")
+        {
+            return IsLabelColon(items, previousIndex)
+                ? 0
+                : options.Spacing.AfterDeclarationColon ? 1 : 0;
+        }
+
         if (current.Token.Text is "(" or "[")
         {
             if (current.Token.Text == "(" && IsParenthesizedExpressionKeyword(previous.Token))
@@ -211,13 +218,6 @@ internal static class TokenSpacer
         if (current.Token.Text == ":")
         {
             return options.Spacing.BeforeDeclarationColon ? 1 : 0;
-        }
-
-        if (previous.Token.Text == ":")
-        {
-            return IsLabelColon(items, previousIndex)
-                ? 0
-                : options.Spacing.AfterDeclarationColon ? 1 : 0;
         }
 
         if (IsUnarySign(items, previousIndex, previousCode))

@@ -17,7 +17,7 @@ Choose one profile, just as in the [README quick start](../README.md#quick-start
 
 | Profile to copy | Style | Preview |
 | --- | --- | --- |
-| [Less whitespace](../examples/less-whitespace.editorconfig) | Compact blocks, aligned columns, multiline endings after the last item | [Example 1](#example-1-less-whitespace) |
+| [Less whitespace](../examples/less-whitespace.editorconfig) | Compact blocks, single spaces without column padding, multiline endings after the last item | [Example 1](#example-1-less-whitespace) |
 | [More whitespace](../examples/more-whitespace.editorconfig) | Separated blocks and calls, aligned columns, multiline endings on their own line | [Example 2](#example-2-more-whitespace) |
 | [More whitespace without assignment alignment](../examples/more-whitespace-without-assignment-alignment.editorconfig) | More whitespace, with single spaces around declaration colons and assignment / named parameter operators | [Example 3](#example-3-more-whitespace-without-assignment-alignment) |
 
@@ -158,13 +158,22 @@ The examples below format the **same code** with each profile. Compare the varia
 
 ### Example 1: Less whitespace
 
-**Compact spacing, aligned columns, closing delimiters after the last item.**
+**Compact blocks, single spaces, closing delimiters after the last item.**
+
+This profile follows the repository's Roslyn-inspired C# style where it maps to
+Structured Text: four-space block and continuation indentation, single spaces
+around operators, and no column padding. Declaration and return-type colons
+have one space on each side (`value : BOOL`), including before an enum's opening
+parenthesis (`TYPE E_Mode : (`). CASE labels stay compact (`1:`). C# settings
+are not read by the Structured Text formatter; this profile selects its own
+equivalent options. Existing multiline assignments indent each continuation,
+including `AND` and `OR` expressions without surrounding parentheses.
 
 [Use this profile](../examples/less-whitespace.editorconfig)
 
 ```iecst
 VAR
-    i              : INT   := 0;
+    i : INT := 0;
     targetPosition : LREAL := 100;
 END_VAR
 positions := [
@@ -174,7 +183,7 @@ IF ready THEN
     FOR i := 0 TO 1 DO
         _axis.Move(Position := positions[i],
                    Velocity := 20);
-        moving            := TRUE;
+        moving := TRUE;
         requestedPosition := targetPosition;
     END_FOR
 ELSE
